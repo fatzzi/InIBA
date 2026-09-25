@@ -1,0 +1,55 @@
+import 'package:flutter/material.dart';
+
+/// Placeholder for the main scrollable feed (View Feed / Filter Feed use cases).
+/// Will be backed by GET /posts once the API exists.
+class FeedScreen extends StatelessWidget {
+  const FeedScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('InIBA'),
+        actions: [
+          IconButton(
+            onPressed: () {},
+            icon: const Icon(Icons.filter_list),
+            tooltip: 'Filter feed',
+          ),
+        ],
+      ),
+      body: const _EmptyState(
+        icon: Icons.dynamic_feed_outlined,
+        message: 'No posts yet.\nBe the first to share your IBA Moment.',
+      ),
+    );
+  }
+}
+
+class _EmptyState extends StatelessWidget {
+  const _EmptyState({required this.icon, required this.message});
+
+  final IconData icon;
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 56, color: Theme.of(context).colorScheme.outline),
+            const SizedBox(height: 12),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodyLarge,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
