@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Feed, search and filter wireframes</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
+.ph{width:390px;height:844px;box-sizing:border-box;background:#fff;border:2px solid #222;border-radius:34px;display:flex;flex-direction:column;overflow:hidden;position:relative}
+.sb{height:34px;flex:none}
+.hd{display:flex;align-items:center;justify-content:space-between;padding:8px 18px;font-weight:700;font-size:18px;flex:none}
+.bd{flex:1;padding:8px 20px;display:flex;flex-direction:column;gap:14px;min-height:0;overflow:hidden}
+.nav{flex:none;height:64px;border-top:1px solid #ccc;display:flex;justify-content:space-around;align-items:center;font-size:13px;color:#555}
+.btn{border:2px solid #222;background:#222;color:#fff;border-radius:12px;height:48px;font-size:16px;font-weight:600;width:100%}
+.btn.o{background:#fff;color:#222}
+.in{border:1.5px solid #888;border-radius:10px;height:46px;padding:0 14px;font-size:15px;box-sizing:border-box;width:100%;background:#fff;color:#222}
+.img{background:#e6e6e6;border:1.5px solid #999;position:relative;border-radius:8px;overflow:hidden}
+.img::before{content:"";position:absolute;inset:0;background:linear-gradient(to top right,transparent calc(50% - 1px),#aaa,transparent calc(50% + 1px))}
+.img::after{content:"";position:absolute;inset:0;background:linear-gradient(to top left,transparent calc(50% - 1px),#aaa,transparent calc(50% + 1px))}
+.t{font-size:14px;color:#555;line-height:1.4;margin:0}
+.tc{text-align:center}
+.lab{font-size:15px;font-weight:600;margin-bottom:10px;color:#444}
+.err-t{color:#b3261e;font-size:13px;margin:0}
+.note{font-size:12px;color:#6b5400;background:#fff7d6;border:1px dashed #c9a300;padding:6px 8px;border-radius:6px;margin:0}
+.sp{flex:1}
+.pill{border:1.5px solid #777;border-radius:99px;padding:4px 12px;font-size:13px;display:inline-block;background:#fff;color:#222}
+.pill.on{background:#222;color:#fff;border-color:#222}
+.row{display:flex;gap:10px;align-items:center}
+.av{width:40px;height:40px;border-radius:50%;border:1.5px solid #777;background:#ddd;flex:none}
+.card{border:1.5px solid #ccc;border-radius:12px;padding:10px;display:flex;flex-direction:column;gap:8px}
+.rx{display:flex;gap:14px;font-size:13px;color:#555}
+.sheet{position:absolute;left:0;right:0;bottom:0;background:#fff;border-top:2px solid #222;border-radius:24px 24px 0 0;padding:18px 20px 24px;display:flex;flex-direction:column;gap:12px}
+.dim{position:absolute;inset:0;background:rgba(0,0,0,.35)}
+</style>
+</helmet>
+<div style="width:1800px;height:1960px;box-sizing:border-box;padding:48px;background:#f3f3f1;color:#222">
+<h1 style="margin:0 0 24px;font-size:36px;height:32px">2 · Feed, Search &amp; Filter</h1>
+<div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:48px">
+
+<div><div class="lab">2.1 Main feed</div>
+<div class="ph"><div class="sb"></div>
+<div class="hd"><span>InIba</span><span class="row"><span class="pill">Filter</span><span class="pill">Search</span></span></div>
+<div class="bd">
+<div class="card"><div class="row"><div class="av"></div><div><b>Sara A.</b><p class="t">BBA '27 · 2 min ago</p></div></div>
+<div class="row"><div class="img" style="flex:1;height:170px"></div><div class="img" style="flex:1;height:170px"></div></div>
+<p class="t">Library grind begins</p><div class="row"><span class="pill">Library</span></div>
+<div class="rx"><span>❤ 12</span><span>🔥 4</span><span>💬 3</span><span>⚑ Report</span></div></div>
+<div class="card"><div class="row"><div class="av"></div><div><b>Hamza K.</b><p class="t">CS '26 · 9 min ago</p></div></div>
+<p class="t" style="font-size:16px;color:#222">Text post: anyone up for chai at the tower?</p>
+<div class="rx"><span>❤ 2</span><span>😂 1</span><span>💬 0</span><span>⚑ Report</span></div></div>
+</div>
+<div class="nav"><span>Feed</span><span>Search</span><span style="border:2px solid #222;border-radius:50%;width:40px;height:40px;display:flex;align-items:center;justify-content:center;font-size:22px;color:#222">+</span><span>Profile</span></div></div></div>
+
+<div><div class="lab">2.2 Full post view</div>
+<div class="ph"><div class="sb"></div>
+<div class="hd"><span>&lsaquo; Back</span><span>Post</span><span>⋯</span></div>
+<div class="bd">
+<div class="row"><div class="av"></div><div><b>Sara A.</b><p class="t">BBA '27 · Library · 2 min ago</p></div></div>
+<div class="img" style="height:300px"></div>
+<div class="img" style="width:110px;height:140px;margin-top:-160px;margin-left:10px;border:2px solid #222"></div>
+<p class="t" style="font-size:16px;color:#222">Library grind begins</p>
+<div class="row"><span class="pill">❤ 12</span><span class="pill">🔥 4</span><span class="pill">+ React</span></div>
+<span class="pill" style="align-self:flex-start">Show comments (3)</span>
+<p class="note">Front camera shown as small inset over the back image, BeReal style.</p>
+</div></div></div>
+
+<div><div class="lab">2.3 Search (typing)</div>
+<div class="ph"><div class="sb"></div>
+<div class="hd"><span>Search</span><span></span></div>
+<div class="bd">
+<input class="in" aria-label="Search students" readonly value="sar">
+<p class="t">Search by name or batch</p>
+<div class="row"><span class="pill on">Name</span><span class="pill">Batch</span></div>
+<div class="row"><div class="av"></div><div><b>Sara A.</b><p class="t">BBA '27</p></div></div>
+<div class="row"><div class="av"></div><div><b>Sarim R.</b><p class="t">CS '25</p></div></div>
+<div class="row"><div class="av"></div><div><b>Saraan M.</b><p class="t">EE '28</p></div></div>
+</div>
+<div class="nav"><span>Feed</span><span style="color:#222;font-weight:700">Search</span><span style="border:2px solid #222;border-radius:50%;width:40px;height:40px;display:flex;align-items:center;justify-content:center;font-size:22px;color:#222">+</span><span>Profile</span></div></div></div>
+
+<div><div class="lab">2.4 Search no results (empty state)</div>
+<div class="ph"><div class="sb"></div>
+<div class="hd"><span>Search</span><span></span></div>
+<div class="bd">
+<input class="in" aria-label="Search students" readonly value="zzq">
+<div class="sp"></div>
+<div class="img" style="width:110px;height:110px;align-self:center;border-radius:50%"></div>
+<p class="tc" style="margin:0;font-weight:700;font-size:18px">No one by that name yet</p>
+<p class="t tc">Check the spelling or try a batch year.</p>
+<div class="sp"></div><div class="sp"></div>
+</div>
+<div class="nav"><span>Feed</span><span style="color:#222;font-weight:700">Search</span><span style="border:2px solid #222;border-radius:50%;width:40px;height:40px;display:flex;align-items:center;justify-content:center;font-size:22px;color:#222">+</span><span>Profile</span></div></div></div>
+
+<div><div class="lab">2.5 Filter panel (bottom sheet)</div>
+<div class="ph"><div class="sb"></div>
+<div class="hd"><span>InIba</span><span class="row"><span class="pill on">Filter · 2</span><span class="pill">Search</span></span></div>
+<div class="bd"><div class="card" style="height:260px"></div></div>
+<div class="dim"></div>
+<div class="sheet">
+<div class="row" style="justify-content:space-between"><b>Filter feed</b><span class="t">Clear all</span></div>
+<p class="t">Campus zone</p><div class="row" style="flex-wrap:wrap"><span class="pill on">Library</span><span class="pill">CED</span><span class="pill">AMAN Tower</span><span class="pill">Hostel</span><span class="pill">Sports Complex</span></div>
+<p class="t">Department</p><div class="row" style="flex-wrap:wrap"><span class="pill">Business</span><span class="pill">CS</span><span class="pill">Economics</span><span class="pill">Social Sci.</span></div>
+<p class="t">Society</p><div class="row" style="flex-wrap:wrap"><span class="pill">Any society ▾</span></div>
+<p class="t">Batch</p><div class="row" style="flex-wrap:wrap"><span class="pill on">My batch</span><span class="pill">2026</span><span class="pill">2027</span><span class="pill">2028</span></div>
+<button class="btn">Show results</button>
+</div></div></div>
+
+<div><div class="lab">2.6 Filtered feed: empty state</div>
+<div class="ph"><div class="sb"></div>
+<div class="hd"><span>InIba</span><span class="row"><span class="pill on">Filter · 2</span><span class="pill">Search</span></span></div>
+<div class="bd">
+<div class="row"><span class="pill">Library ✕</span><span class="pill">My batch ✕</span></div>
+<div class="sp"></div>
+<div class="img" style="width:110px;height:110px;align-self:center;border-radius:50%"></div>
+<p class="tc" style="margin:0;font-weight:700;font-size:18px">Quiet in the Library today</p>
+<p class="t tc">Nobody from your batch has posted here yet. Be the first?</p>
+<button class="btn o" style="width:auto;padding:0 24px;align-self:center">Clear filters</button>
+<div class="sp"></div>
+</div>
+<div class="nav"><span style="color:#222;font-weight:700">Feed</span><span>Search</span><span style="border:2px solid #222;border-radius:50%;width:40px;height:40px;display:flex;align-items:center;justify-content:center;font-size:22px;color:#222">+</span><span>Profile</span></div></div></div>
+
+<div><div class="lab">2.7 Feed locked until you post</div>
+<div class="ph"><div class="sb"></div>
+<div class="hd"><span>InIba</span><span></span></div>
+<div class="bd" style="justify-content:center">
+<div class="card" style="filter:blur(3px)"><div class="row"><div class="av"></div><b>Hidden post</b></div><div class="img" style="height:150px"></div></div>
+<div class="card" style="border:2px solid #222;align-items:center;padding:20px">
+<b style="font-size:18px">Post your IBA Moment to see the feed</b>
+<p class="t tc">Everyone shares first, then everyone sees.</p>
+<button class="btn">Post now</button></div>
+<p class="note">Open question for the team: confirm the exact lock rule before building.</p>
+</div>
+<div class="nav"><span>Feed</span><span>Search</span><span style="border:2px solid #222;border-radius:50%;width:40px;height:40px;display:flex;align-items:center;justify-content:center;font-size:22px;color:#222">+</span><span>Profile</span></div></div></div>
+
+<div><div class="lab">2.8 Loading and network error</div>
+<div class="ph"><div class="sb"></div>
+<div class="hd"><span>InIba</span><span></span></div>
+<div class="bd">
+<div class="card"><div class="row"><div class="av"></div><div style="flex:1;height:14px;background:#e6e6e6;border-radius:6px"></div></div><div class="img" style="height:170px"></div><div style="height:12px;background:#e6e6e6;border-radius:6px;width:60%"></div></div>
+<div class="card"><div class="row"><div class="av"></div><div style="flex:1;height:14px;background:#e6e6e6;border-radius:6px"></div></div><div class="img" style="height:170px"></div></div>
+<p class="err-t tc">Couldn't load the feed. Pull to retry.</p>
+</div>
+<div class="nav"><span>Feed</span><span>Search</span><span style="border:2px solid #222;border-radius:50%;width:40px;height:40px;display:flex;align-items:center;justify-content:center;font-size:22px;color:#222">+</span><span>Profile</span></div></div></div>
+
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1800,"height":1960}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

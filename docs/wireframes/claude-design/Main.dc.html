@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Authentication wireframes</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
+.ph{width:390px;height:844px;box-sizing:border-box;background:#fff;border:2px solid #222;border-radius:34px;display:flex;flex-direction:column;overflow:hidden}
+.sb{height:34px;flex:none}
+.hd{display:flex;align-items:center;justify-content:space-between;padding:8px 18px;font-weight:700;font-size:18px;flex:none}
+.bd{flex:1;padding:8px 20px;display:flex;flex-direction:column;gap:14px;min-height:0}
+.nav{flex:none;height:64px;border-top:1px solid #ccc;display:flex;justify-content:space-around;align-items:center;font-size:13px;color:#555}
+.btn{border:2px solid #222;background:#222;color:#fff;border-radius:12px;height:48px;font-size:16px;font-weight:600;width:100%}
+.btn.o{background:#fff;color:#222}
+.in{border:1.5px solid #888;border-radius:10px;height:46px;padding:0 14px;font-size:15px;box-sizing:border-box;width:100%;background:#fff;color:#222}
+.in.err{border-color:#b3261e}
+.img{background:#e6e6e6;border:1.5px solid #999;position:relative;border-radius:8px;overflow:hidden}
+.img::before{content:"";position:absolute;inset:0;background:linear-gradient(to top right,transparent calc(50% - 1px),#aaa,transparent calc(50% + 1px))}
+.img::after{content:"";position:absolute;inset:0;background:linear-gradient(to top left,transparent calc(50% - 1px),#aaa,transparent calc(50% + 1px))}
+.t{font-size:14px;color:#555;line-height:1.4;margin:0}
+.tc{text-align:center}
+.lab{font-size:15px;font-weight:600;margin-bottom:10px;color:#444}
+.err-t{color:#b3261e;font-size:13px;margin:0}
+.note{font-size:12px;color:#6b5400;background:#fff7d6;border:1px dashed #c9a300;padding:6px 8px;border-radius:6px;margin:0}
+.otp{display:flex;gap:8px;justify-content:center}
+.otp span{width:46px;height:56px;border:1.5px solid #888;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700}
+.sp{flex:1}
+.pill{border:1.5px solid #777;border-radius:99px;padding:4px 12px;font-size:13px;display:inline-block}
+</style>
+</helmet>
+<div style="width:1800px;height:1960px;box-sizing:border-box;padding:48px;background:#f3f3f1;color:#222">
+<h1 style="margin:0 0 24px;font-size:36px;height:32px">1 · Login, Signup &amp; Authentication</h1>
+<div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:48px">
+
+<div><div class="lab">1.1 Welcome (no valid JWT)</div>
+<div class="ph"><div class="sb"></div>
+<div class="bd" style="justify-content:center">
+<div class="img" style="height:200px"></div>
+<h2 class="tc" style="margin:0;font-size:30px">InIba</h2>
+<p class="t tc">Your campus, unfiltered. IBA students only.</p>
+<div class="sp"></div>
+<button class="btn">Sign Up</button><button class="btn o">Log In</button>
+<p class="t tc">Use your @khi.iba.edu.pk email</p>
+</div></div></div>
+
+<div><div class="lab">1.2 Sign Up form</div>
+<div class="ph"><div class="sb"></div>
+<div class="hd"><span>&lsaquo; Back</span><span>Sign Up</span><span style="width:50px"></span></div>
+<div class="bd">
+<label class="t" for="e1">University email</label>
+<input id="e1" class="in" readonly placeholder="name@khi.iba.edu.pk">
+<label class="t" for="p1">Password</label>
+<input id="p1" class="in" readonly placeholder="At least 8 characters">
+<label class="t" for="c1">Confirm password</label>
+<input id="c1" class="in" readonly placeholder="Repeat password">
+<p class="note">Client-side check: email must end in @khi.iba.edu.pk. Submit calls POST /auth/register.</p>
+<div class="sp"></div>
+<button class="btn">Create account</button>
+<p class="t tc">Already have an account? Log In</p>
+</div></div></div>
+
+<div><div class="lab">1.3 Sign Up error (wrong domain)</div>
+<div class="ph"><div class="sb"></div>
+<div class="hd"><span>&lsaquo; Back</span><span>Sign Up</span><span style="width:50px"></span></div>
+<div class="bd">
+<label class="t" for="e2">University email</label>
+<input id="e2" class="in err" readonly value="sara@gmail.com">
+<p class="err-t">Only @khi.iba.edu.pk emails can join InIba.</p>
+<label class="t" for="p2">Password</label>
+<input id="p2" class="in" readonly value="••••••••">
+<label class="t" for="c2">Confirm password</label>
+<input id="c2" class="in err" readonly value="•••••••">
+<p class="err-t">Passwords do not match.</p>
+<div class="sp"></div>
+<button class="btn" style="opacity:.45">Create account</button>
+</div></div></div>
+
+<div><div class="lab">1.4 Verify email (OTP)</div>
+<div class="ph"><div class="sb"></div>
+<div class="hd"><span>&lsaquo; Back</span><span>Verify email</span><span style="width:50px"></span></div>
+<div class="bd">
+<p class="t tc">We sent a 6-digit code to<br><b>sara@khi.iba.edu.pk</b></p>
+<div class="otp"><span>4</span><span>8</span><span>1</span><span>&nbsp;</span><span>&nbsp;</span><span>&nbsp;</span></div>
+<button class="btn" style="margin-top:12px">Verify</button>
+<p class="t tc">Didn't get it? <b>Resend code</b> (0:42)</p>
+<div class="sp"></div>
+<p class="note">POST /auth/verify returns a JWT (24h) stored in secure storage.</p>
+</div></div></div>
+
+<div><div class="lab">1.5 OTP error and rate limit</div>
+<div class="ph"><div class="sb"></div>
+<div class="hd"><span>&lsaquo; Back</span><span>Verify email</span><span style="width:50px"></span></div>
+<div class="bd">
+<p class="t tc">Enter the 6-digit code sent to<br><b>sara@khi.iba.edu.pk</b></p>
+<div class="otp"><span style="border-color:#b3261e">4</span><span style="border-color:#b3261e">8</span><span style="border-color:#b3261e">1</span><span style="border-color:#b3261e">9</span><span style="border-color:#b3261e">0</span><span style="border-color:#b3261e">2</span></div>
+<p class="err-t tc">Wrong or expired code. Try again or request a new one.</p>
+<button class="btn">Verify</button>
+<p class="err-t tc" style="margin-top:8px">Too many attempts. Please wait 10 minutes. (HTTP 429)</p>
+</div></div></div>
+
+<div><div class="lab">1.6 Log In</div>
+<div class="ph"><div class="sb"></div>
+<div class="hd"><span>&lsaquo; Back</span><span>Log In</span><span style="width:50px"></span></div>
+<div class="bd">
+<label class="t" for="e3">University email</label>
+<input id="e3" class="in" readonly placeholder="name@khi.iba.edu.pk">
+<label class="t" for="p3">Password</label>
+<input id="p3" class="in" readonly placeholder="Password">
+<p class="err-t">Incorrect email or password.</p>
+<div class="sp"></div>
+<button class="btn">Log In</button>
+<p class="t tc">New here? Sign Up</p>
+</div></div></div>
+
+<div><div class="lab">1.7 Profile setup (first login)</div>
+<div class="ph"><div class="sb"></div>
+<div class="hd"><span></span><span>Set up your profile</span><span style="width:20px"></span></div>
+<div class="bd" style="align-items:center">
+<div class="img" style="width:120px;height:120px;border-radius:50%"></div>
+<p class="t">Add photo (square, min 400×400)</p>
+<input class="in" aria-label="Full name" readonly placeholder="Full name">
+<input class="in" aria-label="Batch" readonly placeholder="Batch (e.g. 2026)">
+<input class="in" aria-label="Department" readonly placeholder="Department">
+<input class="in" aria-label="Societies (optional)" readonly placeholder="Societies (optional)">
+<div class="sp"></div>
+<button class="btn">Continue to feed</button>
+</div></div></div>
+
+<div><div class="lab">1.8 Settings: Log Out</div>
+<div class="ph"><div class="sb"></div>
+<div class="hd"><span>&lsaquo; Back</span><span>Settings</span><span style="width:50px"></span></div>
+<div class="bd" style="gap:0">
+<div style="padding:16px 0;border-bottom:1px solid #ddd">Edit profile</div>
+<div style="padding:16px 0;border-bottom:1px solid #ddd">Help &amp; FAQ</div>
+<div style="padding:16px 0;border-bottom:1px solid #ddd">Send feedback</div>
+<div style="padding:16px 0;border-bottom:1px solid #ddd;color:#b3261e;font-weight:600">Log Out</div>
+<div class="sp"></div>
+<p class="note">Log Out clears the JWT locally and returns to the Welcome screen.</p>
+</div></div></div>
+
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1800,"height":1960}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

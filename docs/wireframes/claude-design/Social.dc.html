@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Reactions, moderation and admin wireframes</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
+.ph{width:390px;height:844px;box-sizing:border-box;background:#fff;border:2px solid #222;border-radius:34px;display:flex;flex-direction:column;overflow:hidden;position:relative}
+.sb{height:34px;flex:none}
+.hd{display:flex;align-items:center;justify-content:space-between;padding:8px 18px;font-weight:700;font-size:18px;flex:none}
+.bd{flex:1;padding:8px 20px;display:flex;flex-direction:column;gap:14px;min-height:0;overflow:hidden}
+.btn{border:2px solid #222;background:#222;color:#fff;border-radius:12px;height:48px;font-size:16px;font-weight:600;width:100%}
+.btn.o{background:#fff;color:#222}
+.in{border:1.5px solid #888;border-radius:10px;height:46px;padding:0 14px;font-size:15px;box-sizing:border-box;width:100%;background:#fff;color:#222}
+.img{background:#e6e6e6;border:1.5px solid #999;position:relative;border-radius:8px;overflow:hidden}
+.img::before{content:"";position:absolute;inset:0;background:linear-gradient(to top right,transparent calc(50% - 1px),#aaa,transparent calc(50% + 1px))}
+.img::after{content:"";position:absolute;inset:0;background:linear-gradient(to top left,transparent calc(50% - 1px),#aaa,transparent calc(50% + 1px))}
+.t{font-size:14px;color:#555;line-height:1.4;margin:0}
+.tc{text-align:center}
+.lab{font-size:15px;font-weight:600;margin-bottom:10px;color:#444}
+.err-t{color:#b3261e;font-size:13px;margin:0}
+.note{font-size:12px;color:#6b5400;background:#fff7d6;border:1px dashed #c9a300;padding:6px 8px;border-radius:6px;margin:0}
+.sp{flex:1}
+.pill{border:1.5px solid #777;border-radius:99px;padding:4px 12px;font-size:13px;display:inline-block;background:#fff;color:#222}
+.pill.on{background:#222;color:#fff;border-color:#222}
+.row{display:flex;gap:10px;align-items:center}
+.av{width:40px;height:40px;border-radius:50%;border:1.5px solid #777;background:#ddd;flex:none}
+.card{border:1.5px solid #ccc;border-radius:12px;padding:10px;display:flex;flex-direction:column;gap:8px}
+.sheet{position:absolute;left:0;right:0;bottom:0;background:#fff;border-top:2px solid #222;border-radius:24px 24px 0 0;padding:18px 20px 24px;display:flex;flex-direction:column;gap:12px}
+.dim{position:absolute;inset:0;background:rgba(0,0,0,.35)}
+.dlg{position:absolute;left:30px;right:30px;top:260px;background:#fff;border:2px solid #222;border-radius:18px;padding:20px;display:flex;flex-direction:column;gap:12px}
+.rad{display:flex;gap:10px;align-items:center;font-size:15px}
+.rad i{width:18px;height:18px;border:2px solid #222;border-radius:50%;display:inline-block}
+.rad i.on{background:#222}
+.cm{display:flex;gap:10px}
+</style>
+</helmet>
+<div style="width:1800px;height:1960px;box-sizing:border-box;padding:48px;background:#f3f3f1;color:#222">
+<h1 style="margin:0 0 24px;font-size:36px;height:32px">5 · Reactions, Moderation &amp; Admin</h1>
+<div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:48px">
+
+<div><div class="lab">5.1 Emoji reaction picker</div>
+<div class="ph"><div class="sb"></div>
+<div class="hd"><span>InIba</span><span></span></div>
+<div class="bd"><div class="card"><div class="row"><div class="av"></div><b>Sara A.</b></div><div class="img" style="height:240px"></div><p class="t">❤ 12 · 🔥 4 · 👏 2</p></div></div>
+<div class="dim"></div>
+<div class="sheet" style="padding-bottom:30px">
+<b>React</b>
+<div class="row" style="justify-content:space-around;font-size:30px"><span>❤</span><span>🔥</span><span>😂</span><span>😮</span><span>😢</span><span>👏</span></div>
+<p class="t tc">One reaction per post. Tap yours again to remove it.</p>
+</div></div></div>
+
+<div><div class="lab">5.2 Comment thread</div>
+<div class="ph"><div class="sb"></div>
+<div class="hd"><span>&lsaquo; Back</span><span>Comments (3)</span><span></span></div>
+<div class="bd">
+<div class="cm"><div class="av"></div><div><b>Hamza K.</b> <span class="t">2m</span><p class="t" style="color:#222">Same here, third floor?</p></div></div>
+<div class="cm"><div class="av"></div><div><b>Ayesha R.</b> <span class="t">5m</span><p class="t" style="color:#222">Save me a seat</p></div></div>
+<div class="cm"><div class="av"></div><div><b>Sara A.</b> <span class="t">6m</span><p class="t" style="color:#222">Always.</p></div></div>
+<div class="sp"></div>
+<div class="row"><input class="in" aria-label="Write a comment" readonly placeholder="Add a comment…"><span class="pill on">Send</span></div>
+</div></div></div>
+
+<div><div class="lab">5.3 Report post</div>
+<div class="ph"><div class="sb"></div>
+<div class="hd"><span>InIba</span><span></span></div>
+<div class="bd"><div class="card"><div class="row"><div class="av"></div><b>Someone</b><span style="flex:1"></span><span>⋯</span></div><div class="img" style="height:240px"></div></div></div>
+<div class="dim"></div>
+<div class="dlg">
+<b style="font-size:18px">Report this post</b>
+<div class="rad"><i class="on"></i>Inappropriate content</div>
+<div class="rad"><i></i>Harassment or bullying</div>
+<div class="rad"><i></i>Spam</div>
+<div class="rad"><i></i>Something else</div>
+<div class="row"><button class="btn o" style="height:42px">Cancel</button><button class="btn" style="height:42px">Report</button></div>
+</div></div></div>
+
+<div><div class="lab">5.4 Report sent / duplicate</div>
+<div class="ph"><div class="sb"></div>
+<div class="hd"><span>InIba</span><span></span></div>
+<div class="bd" style="justify-content:center;align-items:center;gap:14px">
+<div class="img" style="width:90px;height:90px;border-radius:50%"></div>
+<b style="font-size:20px">Thanks, we'll take a look</b>
+<p class="t tc">The post stays visible until the team reviews it.</p>
+<p class="err-t tc">Duplicate report? "You've already reported this" (HTTP 409)</p>
+<button class="btn" style="width:220px">Back to feed</button>
+</div></div></div>
+
+<div><div class="lab">5.5 Admin: review queue</div>
+<div class="ph"><div class="sb"></div>
+<div class="hd"><span>Review queue</span><span class="pill">Admin</span></div>
+<div class="bd">
+<div class="row"><span class="pill on">Open (3)</span><span class="pill">Decided</span></div>
+<div class="card"><div class="row"><div class="img" style="width:64px;height:64px;flex:none"></div><div><b>Post #482</b><p class="t">2 reports · Inappropriate</p></div></div></div>
+<div class="card"><div class="row"><div class="img" style="width:64px;height:64px;flex:none"></div><div><b>Post #476</b><p class="t">1 report · Spam</p></div></div></div>
+<div class="card"><div class="row"><div class="img" style="width:64px;height:64px;flex:none"></div><div><b>Student: Zed T.</b><p class="t">1 report · Harassment</p></div></div></div>
+<p class="note">Students calling this get 403.</p>
+</div></div></div>
+
+<div><div class="lab">5.6 Admin: decision</div>
+<div class="ph"><div class="sb"></div>
+<div class="hd"><span>&lsaquo; Queue</span><span>Post #482</span><span></span></div>
+<div class="bd">
+<div class="img" style="height:240px"></div>
+<p class="t">By Zed T. · 2 reports: "Inappropriate content" ×2</p>
+<div class="sp"></div>
+<button class="btn" style="background:#b3261e;border-color:#b3261e">Remove post</button>
+<button class="btn o">Ignore report</button>
+<p class="t tc">Already decided? (HTTP 409)</p>
+</div></div></div>
+
+<div><div class="lab">5.7 Help &amp; FAQ</div>
+<div class="ph"><div class="sb"></div>
+<div class="hd"><span>&lsaquo; Back</span><span>Help &amp; FAQ</span><span></span></div>
+<div class="bd">
+<div class="card"><b>What is IBA Moment?</b><p class="t">A daily random time when everyone has 2 minutes to post.</p></div>
+<div class="card"><b>Why only @khi.iba.edu.pk?</b><p class="t">InIba is a closed community for IBA students.</p></div>
+<div class="card"><b>How do I report a post?</b><p class="t">Tap ⚑ on any post.</p></div>
+<div class="sp"></div>
+<button class="btn o">Send feedback</button>
+</div></div></div>
+
+<div><div class="lab">5.8 Send feedback</div>
+<div class="ph"><div class="sb"></div>
+<div class="hd"><span>Cancel</span><span>Feedback</span><span>Send</span></div>
+<div class="bd">
+<p class="t">How are you finding InIba?</p>
+<div class="row" style="justify-content:center;font-size:30px"><span>★</span><span>★</span><span>★</span><span>☆</span><span>☆</span></div>
+<div class="in" style="height:180px;padding-top:12px;color:#888">Tell us what to improve…</div>
+<div class="sp"></div>
+<button class="btn">Send feedback</button>
+</div></div></div>
+
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1800,"height":1960}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

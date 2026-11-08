@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>IBA Moment and content creation wireframes</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
+.ph{width:390px;height:844px;box-sizing:border-box;background:#fff;border:2px solid #222;border-radius:34px;display:flex;flex-direction:column;overflow:hidden;position:relative}
+.sb{height:34px;flex:none}
+.hd{display:flex;align-items:center;justify-content:space-between;padding:8px 18px;font-weight:700;font-size:18px;flex:none}
+.bd{flex:1;padding:8px 20px;display:flex;flex-direction:column;gap:14px;min-height:0;overflow:hidden}
+.btn{border:2px solid #222;background:#222;color:#fff;border-radius:12px;height:48px;font-size:16px;font-weight:600;width:100%}
+.btn.o{background:#fff;color:#222}
+.in{border:1.5px solid #888;border-radius:10px;height:46px;padding:0 14px;font-size:15px;box-sizing:border-box;width:100%;background:#fff;color:#222}
+.img{background:#e6e6e6;border:1.5px solid #999;position:relative;border-radius:8px;overflow:hidden}
+.img::before{content:"";position:absolute;inset:0;background:linear-gradient(to top right,transparent calc(50% - 1px),#aaa,transparent calc(50% + 1px))}
+.img::after{content:"";position:absolute;inset:0;background:linear-gradient(to top left,transparent calc(50% - 1px),#aaa,transparent calc(50% + 1px))}
+.t{font-size:14px;color:#555;line-height:1.4;margin:0}
+.tc{text-align:center}
+.lab{font-size:15px;font-weight:600;margin-bottom:10px;color:#444}
+.err-t{color:#b3261e;font-size:13px;margin:0}
+.note{font-size:12px;color:#6b5400;background:#fff7d6;border:1px dashed #c9a300;padding:6px 8px;border-radius:6px;margin:0}
+.sp{flex:1}
+.pill{border:1.5px solid #777;border-radius:99px;padding:4px 12px;font-size:13px;display:inline-block;background:#fff;color:#222}
+.pill.on{background:#222;color:#fff;border-color:#222}
+.row{display:flex;gap:10px;align-items:center}
+.av{width:40px;height:40px;border-radius:50%;border:1.5px solid #777;background:#ddd;flex:none}
+.shut{width:72px;height:72px;border-radius:50%;border:4px solid #fff;margin:0 auto;background:#fff;opacity:.9}
+.dk{background:#111;color:#fff}
+.ring{width:150px;height:150px;border-radius:50%;border:6px solid #fff;display:flex;align-items:center;justify-content:center;font-size:44px;font-weight:700;margin:0 auto}
+</style>
+</helmet>
+<div style="width:1800px;height:1960px;box-sizing:border-box;padding:48px;background:#f3f3f1;color:#222">
+<h1 style="margin:0 0 24px;font-size:36px;height:32px">4 · IBA Moment &amp; Content Creation</h1>
+<div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:48px">
+
+<div><div class="lab">4.1 Push notification (lock screen)</div>
+<div class="ph dk"><div class="sb"></div>
+<div class="bd" style="justify-content:center;align-items:center;gap:20px">
+<p style="margin:0;font-size:56px;font-weight:300">2:47</p>
+<div style="width:330px;border:1.5px solid #888;border-radius:16px;padding:14px;background:#2a2a2a"><b>InIba</b><p class="t" style="color:#ddd;margin-top:4px">⏰ It's IBA Moment! You have 2 minutes to post.</p></div>
+<p class="t" style="color:#ccc">Random time each day, sent to everyone at once.</p>
+</div></div></div>
+
+<div><div class="lab">4.2 Countdown (2:00 window)</div>
+<div class="ph dk"><div class="sb"></div>
+<div class="bd" style="justify-content:center;gap:24px">
+<p class="tc" style="margin:0;font-size:22px;font-weight:700">Time to be real</p>
+<div class="ring">1:48</div>
+<p class="t tc" style="color:#ddd">Front camera first, then back camera.</p>
+<button class="btn" style="background:#fff;color:#111;border-color:#fff">Open camera</button>
+<button class="btn o" style="background:transparent;color:#fff;border-color:#888">Post text instead</button>
+</div></div></div>
+
+<div><div class="lab">4.3 Capture: front camera</div>
+<div class="ph dk"><div class="sb"></div>
+<div class="hd"><span>✕</span><span>1:32</span><span>⟲ Flip</span></div>
+<div class="bd"><div class="img" style="flex:1;background:#333;border-color:#777"></div>
+<p class="t tc" style="color:#ddd">Step 1 of 2: front camera</p><div class="shut"></div></div></div></div>
+
+<div><div class="lab">4.4 Capture: back camera</div>
+<div class="ph dk"><div class="sb"></div>
+<div class="hd"><span>✕</span><span>1:15</span><span></span></div>
+<div class="bd"><div class="img" style="flex:1;background:#333;border-color:#777"></div>
+<div class="img" style="width:96px;height:124px;margin-top:-170px;margin-left:10px;border:2px solid #fff;background:#555;position:relative;z-index:1"></div>
+<p class="t tc" style="color:#ddd">Step 2 of 2: back camera (front shot kept as inset)</p><div class="shut"></div></div></div></div>
+
+<div><div class="lab">4.5 Preview, caption and zone</div>
+<div class="ph"><div class="sb"></div>
+<div class="hd"><span>Retake</span><span>New post</span><span>Post</span></div>
+<div class="bd">
+<div class="img" style="height:260px"></div>
+<input class="in" aria-label="Caption" readonly placeholder="Add a caption (optional)">
+<b>Where are you?</b>
+<div class="row" style="flex-wrap:wrap"><span class="pill on">Library</span><span class="pill">CED</span><span class="pill">AMAN Tower</span><span class="pill">Hostel</span><span class="pill">Sports Complex</span><span class="pill">No tag</span></div>
+<div class="sp"></div>
+<button class="btn">Post to feed</button>
+</div></div></div>
+
+<div><div class="lab">4.6 Text post composer</div>
+<div class="ph"><div class="sb"></div>
+<div class="hd"><span>Cancel</span><span>Text post</span><span>Post</span></div>
+<div class="bd">
+<div class="in" style="height:200px;padding-top:12px;color:#888">What's happening on campus?</div>
+<div class="row" style="flex-wrap:wrap"><span class="pill">Library</span><span class="pill">CED</span><span class="pill">AMAN Tower</span><span class="pill">Hostel</span></div>
+<p class="t">Text posts stay available even after the IBA Moment window closes.</p>
+<div class="sp"></div><button class="btn">Post</button>
+</div></div></div>
+
+<div><div class="lab">4.7 Missed the window</div>
+<div class="ph"><div class="sb"></div>
+<div class="hd"><span>&lsaquo; Back</span><span>IBA Moment</span><span></span></div>
+<div class="bd" style="justify-content:center;align-items:center;gap:16px">
+<div class="img" style="width:110px;height:110px;border-radius:50%"></div>
+<b style="font-size:20px">You missed today's Moment</b>
+<p class="t tc">The 2-minute window has closed (HTTP 410). See you at the next one!</p>
+<button class="btn" style="width:240px">Write a text post</button>
+<button class="btn o" style="width:240px">Back to feed</button>
+</div></div></div>
+
+<div><div class="lab">4.8 Rejected photo and already posted</div>
+<div class="ph"><div class="sb"></div>
+<div class="hd"><span>Retake</span><span>New post</span><span></span></div>
+<div class="bd">
+<div class="img" style="height:220px;border:2px solid #b3261e"></div>
+<p class="err-t"><b>Photo rejected.</b> It may contain inappropriate content (HTTP 422). Please retake.</p>
+<button class="btn">Retake photo</button>
+<div class="sp"></div>
+<div style="border:1.5px dashed #999;border-radius:10px;padding:12px"><b>Already posted today</b><p class="t">You've shared today's IBA Moment (HTTP 409). Check your timeline.</p></div>
+</div></div></div>
+
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1800,"height":1960}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>
