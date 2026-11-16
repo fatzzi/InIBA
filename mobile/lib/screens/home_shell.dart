@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'create_post_screen.dart';
 import 'feed_screen.dart';
-import 'profile_screen.dart';
+import '../features/profile/profile_screen.dart';
 import 'search_screen.dart';
 
 /// Bottom-nav shell for the four core features: Feed, Search, Create, Profile.

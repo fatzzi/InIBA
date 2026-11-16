@@ -1,3 +1,4 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:iniba/main.dart';
@@ -5,7 +6,7 @@ import 'package:iniba/main.dart';
 void main() {
   testWidgets('Welcome screen shows app name and auth buttons',
       (WidgetTester tester) async {
-    await tester.pumpWidget(const InibaApp());
+    await tester.pumpWidget(const ProviderScope(child: InibaApp()));
 
     expect(find.text('InIBA'), findsOneWidget);
     expect(find.text('Log In'), findsOneWidget);

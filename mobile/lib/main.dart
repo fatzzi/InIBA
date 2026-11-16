@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'screens/welcome_screen.dart';
 
 void main() {
-  runApp(const InibaApp());
+  runApp(const ProviderScope(child: InibaApp()));
 }
 
 class InibaApp extends StatelessWidget {
