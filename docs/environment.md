@@ -20,7 +20,8 @@ Start the database and apply migrations:
 docker compose up -d db         # from the repo root
 cd backend
 alembic upgrade head
-SEED_PASSWORD="choose-a-dev-password" python -m scripts.seed
+$env:SEED_PASSWORD = "choose-a-dev-password" #12345
+python -m scripts.seed
 uvicorn app.main:app --reload
 ```
 
