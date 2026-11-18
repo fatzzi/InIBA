@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/api_client.dart';
@@ -35,6 +37,8 @@ class ProfileState {
     required this.isMore,
     this.loadingMore = false,
     this.loadMoreError,
+    this.localPhoto,
+    this.saving = false,
   });
 
   final Profile profile;
@@ -43,19 +47,31 @@ class ProfileState {
   final bool loadingMore;
   final String? loadMoreError;
 
+  /// The photo the student just cropped. Shown instead of [Profile.profilePhoto] so a new photo appears
+  /// instantly, before (and after) the upload.
+  final Uint8List? localPhoto;
+
+  /// An edit is being sent to the server; the profile already shows the new values.
+  final bool saving;
+
   ProfileState copyWith({
+    Profile? profile,
     List<PostThumb>? posts,
     bool? isMore,
     bool? loadingMore,
     String? loadMoreError,
     bool clearError = false,
+    Uint8List? localPhoto,
+    bool? saving,
   }) =>
       ProfileState(
-        profile: profile,
+        profile: profile ?? this.profile,
         posts: posts ?? this.posts,
         isMore: isMore ?? this.isMore,
         loadingMore: loadingMore ?? this.loadingMore,
         loadMoreError: clearError ? null : (loadMoreError ?? this.loadMoreError),
+        localPhoto: localPhoto ?? this.localPhoto,
+        saving: saving ?? this.saving,
       );
 }
 
@@ -90,6 +106,31 @@ class ProfileController extends AutoDisposeFamilyAsyncNotifier<ProfileState, int
         loadingMore: false,
         loadMoreError: e is ApiException ? e.message : 'Could not load more posts.',
       ));
+    }
+  }
+
+  /// Optimistic save (SCRUM-34): show the edit straight away, send it, and roll back if the server
+  /// refuses. Returns null on success, or the error message after rolling back.
+  Future<String?> save(ProfileEdit edit) async {
+    final before = state.valueOrNull;
+    if (before == null) return 'Profile is not loaded yet.';
+    final optimistic = before.profile.copyWith(
+      bio: edit.bio,
+      moodSticker: edit.moodSticker,
+      clearMood: edit.moodSticker == null,
+      societies: edit.societies,
+    );
+    state = AsyncData(before.copyWith(profile: optimistic, localPhoto: edit.photoJpeg, saving: true));
+    try {
+      final saved = await ref.read(profileRepositoryProvider).updateProfile(arg, edit);
+      if (_disposed) return null;
+      final current = state.valueOrNull ?? before;
+      // Keep the loaded posts; PATCH responses have none.
+      state = AsyncData(current.copyWith(profile: saved.copyWith(posts: current.profile.posts), saving: false));
+      return null;
+    } on Exception catch (e) {
+      if (!_disposed) state = AsyncData(before);
+      return e is ApiException ? e.message : 'Could not save your profile.';
     }
   }
 }
