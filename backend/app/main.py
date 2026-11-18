@@ -5,13 +5,14 @@ from sqlalchemy.orm import Session
 
 from app.db import get_db
 from app.errors import install_error_handlers
-from app.routers import profile
+from app.routers import posts, profile
 from app.storage import MEDIA_ROOT, MEDIA_URL
 
 app = FastAPI(title="InIBA API", version="0.1.0")
 install_error_handlers(app)
 
 app.include_router(profile.router)
+app.include_router(posts.router)
 
 # Local image storage (see app/storage.py). A cloud store will serve its own URLs instead.
 MEDIA_ROOT.mkdir(parents=True, exist_ok=True)
@@ -26,4 +27,4 @@ def health(db: Session = Depends(get_db)) -> dict[str, str]:
 
 
 # Feature routers are added per sprint (see docs/api-doc.pdf):
-#   auth (E1), students/profile (E3, profile done), feed/posts/moments (E4), search+filter (E2), admin (E5)
+#   auth (E1), students/profile (E3, profile done), feed/moments (E4, posts done), search+filter (E2), admin (E5)
