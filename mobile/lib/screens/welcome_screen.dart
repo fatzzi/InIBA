@@ -57,7 +57,7 @@ class WelcomeScreen extends StatelessWidget {
   }
 
   void _enterApp(BuildContext context) {
-    Navigator.of(context).push(
+    Navigator.of(context).pushReplacement(
       MaterialPageRoute(builder: (_) => const HomeShell()),
     );
   }

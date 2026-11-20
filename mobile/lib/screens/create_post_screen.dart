@@ -25,7 +25,9 @@ class CreatePostScreen extends StatelessWidget {
               ),
               const SizedBox(height: 24),
               FilledButton.icon(
-                onPressed: () {},
+                onPressed: () => ScaffoldMessenger.of(context)
+                  ..hideCurrentSnackBar()
+                  ..showSnackBar(const SnackBar(content: Text('Text posts are coming soon.'))),
                 icon: const Icon(Icons.edit_outlined),
                 label: const Text('Write a text post'),
               ),

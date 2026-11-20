@@ -79,8 +79,9 @@ void main() {
 
     expect(find.text('library regular'), findsOneWidget);
     expect(find.text('Mood: 📚 studying'), findsOneWidget);
-    expect(find.widgetWithText(Pill, 'IEEE'), findsOneWidget);
-    expect(find.widgetWithText(Pill, 'Debating Society'), findsNothing);
+    final details = tester.widget<Text>(find.byKey(const Key('profile-details'))).data!;
+    expect(details, contains('IEEE'));
+    expect(details, isNot(contains('Debating Society')));
     expect(find.byKey(const Key('saving-indicator')), findsOneWidget);
 
     await tester.pumpAndSettle(const Duration(seconds: 3));

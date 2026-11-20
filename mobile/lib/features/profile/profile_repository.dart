@@ -133,7 +133,11 @@ class FakeProfileRepository implements ProfileRepository {
       isMore: end < total,
       items: [
         for (var i = offset; i < end; i++)
-          PostThumb(postId: studentId * 1000 + total - i, excerpt: _captions[i % _captions.length]),
+          PostThumb(
+            postId: studentId * 1000 + total - i,
+            thumbnail: i % 3 == 0 ? 'https://example.invalid/posts/${studentId * 1000 + total - i}.jpg' : null,
+            excerpt: _captions[i % _captions.length],
+          ),
       ],
     );
   }
