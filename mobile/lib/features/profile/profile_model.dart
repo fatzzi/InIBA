@@ -8,6 +8,9 @@ class PostThumb {
   final String? thumbnail;
   final String? excerpt;
 
+  /// Photo posts go in the Photos grid; text-only posts go in the Text list.
+  bool get hasPhoto => thumbnail != null && thumbnail!.isNotEmpty;
+
   factory PostThumb.fromJson(Map<String, dynamic> json) => PostThumb(
         postId: json['postId'] as int,
         thumbnail: json['thumbnail'] as String?,

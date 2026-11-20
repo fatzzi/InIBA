@@ -24,7 +24,16 @@ class ProfileScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
+        // Your own profile is a bottom-nav tab, so it has no back button (wireframe 3.1).
+        automaticallyImplyLeading: !isOwn,
         title: Text(isOwn ? 'Profile' : (state.valueOrNull?.profile.name ?? 'Profile')),
+        actions: [
+          if (isOwn)
+            TextButton(
+              onPressed: () => _showSoon(context, 'Settings are coming soon.'),
+              child: const Text('Settings'),
+            ),
+        ],
       ),
       body: state.when(
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -45,7 +54,8 @@ class ProfileScreen extends ConsumerWidget {
   }
 }
 
-class _ProfileBody extends StatelessWidget {
+/// Header, then two tabs: Photos (3-column grid) and Text (a scrolling list).
+class _ProfileBody extends StatefulWidget {
   const _ProfileBody({required this.data, required this.isOwn, required this.onLoadMore});
 
   final ProfileState data;
@@ -53,44 +63,130 @@ class _ProfileBody extends StatelessWidget {
   final VoidCallback onLoadMore;
 
   @override
+  State<_ProfileBody> createState() => _ProfileBodyState();
+}
+
+class _ProfileBodyState extends State<_ProfileBody> with SingleTickerProviderStateMixin {
+  late final TabController _tabs = TabController(length: 2, vsync: this)..addListener(_onTab);
+
+  void _onTab() {
+    if (!_tabs.indexIsChanging) setState(() {});
+  }
+
+  @override
+  void dispose() {
+    _tabs.dispose();
+    super.dispose();
+  }
+
+  /// Fetch the next page once the user is near the end of the posts this tab shows.
+  void _maybeLoadMore(int index, int shown) {
+    final data = widget.data;
+    if (index >= shown - 6 && data.isMore && !data.loadingMore && data.loadMoreError == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => widget.onLoadMore());
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final posts = data.posts;
+    final data = widget.data;
+    final photosTab = _tabs.index == 0;
+    final shown = [
+      for (final p in data.posts)
+        if (p.hasPhoto == photosTab) p,
+    ];
+    if (shown.isEmpty && data.isMore && !data.loadingMore && data.loadMoreError == null) {
+      // This tab has nothing loaded yet but more posts exist: keep fetching.
+      WidgetsBinding.instance.addPostFrameCallback((_) => widget.onLoadMore());
+    }
+    final scheme = Theme.of(context).colorScheme;
+
     return CustomScrollView(
       physics: const AlwaysScrollableScrollPhysics(),
       slivers: [
         SliverPadding(
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
-          sliver: SliverToBoxAdapter(child: _Header(profile: data.profile, isOwn: isOwn)),
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
+          sliver: SliverToBoxAdapter(child: _Header(profile: data.profile, isOwn: widget.isOwn)),
         ),
-        if (posts.isEmpty && !data.isMore)
-          const SliverPadding(
-            padding: EdgeInsets.all(32),
-            sliver: SliverToBoxAdapter(child: Center(child: Text('No posts yet'))),
-          )
-        else
+        SliverPersistentHeader(
+          pinned: true,
+          delegate: _TabBarHeader(
+            TabBar(
+              key: const Key('post-tabs'),
+              controller: _tabs,
+              labelColor: scheme.onSurface,
+              unselectedLabelColor: scheme.onSurfaceVariant,
+              labelStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+              unselectedLabelStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w400),
+              indicatorColor: scheme.onSurface,
+              indicatorSize: TabBarIndicatorSize.tab,
+              dividerColor: scheme.outlineVariant.withValues(alpha: 0.6),
+              tabs: const [Tab(text: 'Photos'), Tab(text: 'Text')],
+            ),
+          ),
+        ),
+        if (shown.isEmpty && !data.isMore)
           SliverPadding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
+            padding: const EdgeInsets.all(32),
+            sliver: SliverToBoxAdapter(
+              child: Center(
+                child: Text(data.posts.isEmpty ? 'No posts yet' : (photosTab ? 'No photos yet' : 'No text posts yet')),
+              ),
+            ),
+          )
+        else if (photosTab)
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(20, 14, 20, 0),
             sliver: SliverGrid.builder(
               key: const Key('post-grid'),
-              itemCount: posts.length,
+              itemCount: shown.length,
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 3,
                 crossAxisSpacing: 6,
                 mainAxisSpacing: 6,
               ),
               itemBuilder: (context, index) {
-                if (index >= posts.length - 6 && data.isMore && !data.loadingMore && data.loadMoreError == null) {
-                  // Near the end of what is loaded: fetch the next page after this frame.
-                  WidgetsBinding.instance.addPostFrameCallback((_) => onLoadMore());
-                }
-                return _PostTile(post: posts[index]);
+                _maybeLoadMore(index, shown.length);
+                return _PostTile(post: shown[index]);
+              },
+            ),
+          )
+        else
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(20, 14, 20, 0),
+            sliver: SliverList.separated(
+              key: const Key('text-list'),
+              itemCount: shown.length,
+              separatorBuilder: (_, _) => const SizedBox(height: 10),
+              itemBuilder: (context, index) {
+                _maybeLoadMore(index, shown.length);
+                return _TextPostCard(post: shown[index]);
               },
             ),
           ),
-        SliverToBoxAdapter(child: _GridFooter(data: data, onLoadMore: onLoadMore)),
+        SliverToBoxAdapter(child: _GridFooter(data: data, onLoadMore: widget.onLoadMore)),
       ],
     );
   }
+}
+
+class _TabBarHeader extends SliverPersistentHeaderDelegate {
+  const _TabBarHeader(this.tabBar);
+
+  final TabBar tabBar;
+
+  @override
+  double get minExtent => tabBar.preferredSize.height;
+
+  @override
+  double get maxExtent => tabBar.preferredSize.height;
+
+  @override
+  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) =>
+      ColoredBox(color: Theme.of(context).colorScheme.surface, child: tabBar);
+
+  @override
+  bool shouldRebuild(_TabBarHeader old) => old.tabBar != tabBar;
 }
 
 class _Header extends StatelessWidget {
@@ -102,11 +198,12 @@ class _Header extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final badges = [
+    // Wireframe 3.1: "2027 · Business · Debating" as one line under the name.
+    final details = [
       if (profile.batch case final b? when b.isNotEmpty) b,
       if (profile.department case final d? when d.isNotEmpty) d,
       ...profile.societies,
-    ];
+    ].join(' · ');
     final mood = profile.moodSticker;
     final bio = profile.bio;
 
@@ -117,57 +214,52 @@ class _Header extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             _Avatar(url: profile.profilePhoto, name: profile.name),
-            const SizedBox(width: 16),
+            const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(profile.name, style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 6,
-                    runSpacing: 6,
-                    children: [for (final b in badges) Pill(label: b)],
-                  ),
+                  Text(profile.name,
+                      style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700, fontSize: 17)),
+                  if (details.isNotEmpty) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      details,
+                      key: const Key('profile-details'),
+                      style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                    ),
+                  ],
                 ],
               ),
             ),
           ],
         ),
         if (mood != null && mood.isNotEmpty) ...[
-          const SizedBox(height: 16),
-          Pill(key: const Key('mood-pill'), label: 'Mood: $mood', icon: Icons.emoji_emotions_outlined),
+          const SizedBox(height: 14),
+          Pill(key: const Key('mood-pill'), label: 'Mood: $mood'),
         ],
         if (bio != null && bio.isNotEmpty) ...[
           const SizedBox(height: 12),
-          Text(bio, style: theme.textTheme.bodyLarge?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+          Text(bio, style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
         ],
         const SizedBox(height: 12),
         Wrap(
-          spacing: 8,
+          spacing: 10,
           runSpacing: 8,
           children: [
-            Pill(
-              key: const Key('streak-pill'),
-              label: '${profile.streak} day streak',
-              icon: Icons.local_fire_department_outlined,
-              subtle: true,
-            ),
-            for (final t in profile.tags) Pill(label: '#$t', subtle: true),
+            Pill(key: const Key('streak-pill'), label: '${profile.streak} day streak', dashed: true),
+            for (final t in profile.tags) Pill(label: '#$t', dashed: true),
           ],
         ),
         if (isOwn) ...[
-          const SizedBox(height: 16),
+          const SizedBox(height: 14),
           SizedBox(
             width: double.infinity,
             child: OutlinedButton(
               onPressed: () => Navigator.of(context).push(
                 MaterialPageRoute<void>(builder: (_) => const _ComingSoonScreen(title: 'Edit profile')),
               ),
-              child: const Padding(
-                padding: EdgeInsets.symmetric(vertical: 12),
-                child: Text('Edit profile'),
-              ),
+              child: const Text('Edit profile'),
             ),
           ),
         ],
@@ -186,56 +278,76 @@ class _Avatar extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final initial = name.trim().isEmpty ? '?' : name.trim()[0].toUpperCase();
-    final fallback = Text(initial, style: TextStyle(fontSize: 32, color: scheme.onPrimaryContainer));
+    final fallback = Center(
+      child: Text(initial, style: TextStyle(fontSize: 30, color: scheme.onPrimaryContainer)),
+    );
     final photo = url;
-    return CircleAvatar(
-      radius: 44,
-      backgroundColor: scheme.primaryContainer,
+    return Container(
+      width: 84,
+      height: 84,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: scheme.primaryContainer,
+        border: Border.all(color: scheme.outlineVariant),
+      ),
+      clipBehavior: Clip.antiAlias,
       child: photo == null || photo.isEmpty
           ? fallback
-          : ClipOval(
-              child: Image.network(
-                photo,
-                width: 88,
-                height: 88,
-                fit: BoxFit.cover,
-                errorBuilder: (_, _, _) => fallback,
-              ),
-            ),
+          : Image.network(photo, width: 84, height: 84, fit: BoxFit.cover, errorBuilder: (_, _, _) => fallback),
     );
   }
 }
 
-/// Rounded badge used for batch, department, societies, mood, streak and tags.
+/// Rounded badge. Solid outline for the mood; dashed outline for streak and tags (wireframe 3.1).
 class Pill extends StatelessWidget {
-  const Pill({super.key, required this.label, this.icon, this.subtle = false});
+  const Pill({super.key, required this.label, this.dashed = false});
 
   final String label;
-  final IconData? icon;
-  final bool subtle;
+  final bool dashed;
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: subtle ? scheme.surfaceContainerHighest : null,
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: subtle ? scheme.outlineVariant : scheme.outline),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (icon != null) ...[
-            Icon(icon, size: 16, color: scheme.primary),
-            const SizedBox(width: 4),
-          ],
-          Flexible(child: Text(label, overflow: TextOverflow.ellipsis)),
-        ],
-      ),
+    final text = Text(label, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 13));
+    if (!dashed) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(color: scheme.outline),
+        ),
+        child: text,
+      );
+    }
+    return CustomPaint(
+      painter: _DashedBorderPainter(color: scheme.outlineVariant, radius: 8),
+      child: Padding(padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8), child: text),
     );
   }
+}
+
+class _DashedBorderPainter extends CustomPainter {
+  const _DashedBorderPainter({required this.color, required this.radius});
+
+  final Color color;
+  final double radius;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.2;
+    final rect = RRect.fromRectAndRadius(Offset.zero & size, Radius.circular(radius)).deflate(0.6);
+    for (final metric in (Path()..addRRect(rect)).computeMetrics()) {
+      for (double d = 0; d < metric.length; d += 7) {
+        canvas.drawPath(metric.extractPath(d, d + 4), paint);
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(_DashedBorderPainter old) => old.color != color || old.radius != radius;
 }
 
 class _PostTile extends StatelessWidget {
@@ -246,28 +358,50 @@ class _PostTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final excerpt = Padding(
-      padding: const EdgeInsets.all(8),
-      child: Text(
-        post.excerpt ?? '',
-        maxLines: 4,
-        overflow: TextOverflow.ellipsis,
-        style: Theme.of(context).textTheme.bodySmall,
-      ),
-    );
-    final thumb = post.thumbnail;
+    final placeholder = Icon(Icons.image_outlined, color: scheme.onSurfaceVariant);
     return Material(
       color: scheme.surfaceContainerHighest,
-      borderRadius: BorderRadius.circular(8),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8),
+        side: BorderSide(color: scheme.outlineVariant),
+      ),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         key: Key('post-${post.postId}'),
-        onTap: () => ScaffoldMessenger.of(context)
-          ..hideCurrentSnackBar()
-          ..showSnackBar(const SnackBar(content: Text('Full post view is coming soon.'))),
-        child: thumb == null || thumb.isEmpty
-            ? excerpt
-            : Image.network(thumb, fit: BoxFit.cover, errorBuilder: (_, _, _) => excerpt),
+        onTap: () => _showSoon(context, 'Full post view is coming soon.'),
+        child: Image.network(
+          post.thumbnail!,
+          fit: BoxFit.cover,
+          errorBuilder: (_, _, _) => Center(child: placeholder),
+        ),
+      ),
+    );
+  }
+}
+
+/// A text post in the Text tab. The profile API sends the first 60 characters, so long posts end in "…".
+class _TextPostCard extends StatelessWidget {
+  const _TextPostCard({required this.post});
+
+  final PostThumb post;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Material(
+      color: scheme.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10),
+        side: BorderSide(color: scheme.outlineVariant),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        key: Key('post-${post.postId}'),
+        onTap: () => _showSoon(context, 'Full post view is coming soon.'),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+          child: Text(textPostLabel(post.excerpt ?? ''), style: Theme.of(context).textTheme.bodyLarge),
+        ),
       ),
     );
   }
@@ -343,3 +477,15 @@ class _ComingSoonScreen extends StatelessWidget {
     );
   }
 }
+
+void _showSoon(BuildContext context, String message) {
+  ScaffoldMessenger.of(context)
+    ..hideCurrentSnackBar()
+    ..showSnackBar(SnackBar(content: Text(message)));
+}
+
+/// The profile API cuts post text at this many characters (backend `EXCERPT_LEN`).
+const kExcerptLen = 60;
+
+/// Adds "…" when the excerpt is as long as the API's cut-off, so a cut post doesn't look finished.
+String textPostLabel(String excerpt) => excerpt.length >= kExcerptLen ? '${excerpt.trimRight()}…' : excerpt;

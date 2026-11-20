@@ -32,9 +32,12 @@ void main() {
     await pumpProfile(tester);
 
     expect(find.text('Fatima K.'), findsOneWidget);
-    for (final pill in ['2027', 'Business', 'Debating Society', '#nightowl', '#chai']) {
+    expect(find.text('2027 · Business · Debating Society'), findsOneWidget); // one line, as in wireframe 3.1
+    for (final pill in ['#nightowl', '#chai', '7 day streak', 'Mood: need coffee']) {
       expect(find.widgetWithText(Pill, pill), findsOneWidget, reason: pill);
     }
+    expect(find.text('Settings'), findsOneWidget);
+    expect(find.byType(BackButton), findsNothing); // own profile is a tab, no back arrow
     expect(find.text('Mood: need coffee'), findsOneWidget);
     expect(find.text('spreadsheet enthusiast, tea over coffee.'), findsOneWidget);
     expect(find.text('7 day streak'), findsOneWidget);
@@ -54,6 +57,7 @@ void main() {
     expect(find.text('Mood: midterms'), findsOneWidget);
     expect(find.text('12 day streak'), findsOneWidget);
     expect(find.text('Edit profile'), findsNothing);
+    expect(find.text('Settings'), findsNothing);
     expect(find.byIcon(Icons.edit_outlined), findsNothing);
     expect(find.textContaining('@'), findsNothing);
   });
@@ -68,6 +72,9 @@ void main() {
   testWidgets('student with no posts shows an empty state', (tester) async {
     await pumpProfile(tester, studentId: 3);
     expect(find.text('Hamza K.'), findsNWidgets(2));
+    expect(find.text('No posts yet'), findsOneWidget);
+    await tester.tap(find.text('Text'));
+    await tester.pumpAndSettle();
     expect(find.text('No posts yet'), findsOneWidget);
     expect(find.byKey(const Key('mood-pill')), findsNothing);
   });
@@ -104,34 +111,65 @@ void main() {
     expect(find.byType(CircularProgressIndicator), findsNothing);
   });
 
-  testWidgets('grid shows thumbnails and loads the next pages on scroll', (tester) async {
-    final repo = await pumpProfile(tester); // fake has 45 posts for student 1, 20 per page
+  // The fake gives student 1 45 posts, 20 per page; every third one (1045, 1042, ... 1003) has a photo.
+  testWidgets('Photos tab shows photo posts; Text tab lists text posts', (tester) async {
+    await pumpProfile(tester);
 
-    expect(find.byKey(const Key('post-1045')), findsOneWidget); // newest post first
-    expect(repo.fetchPostsCalls, 0);
+    expect(find.byKey(const Key('post-grid')), findsOneWidget);
+    expect(find.byKey(const Key('post-1045')), findsOneWidget); // newest photo post
+    expect(find.byKey(const Key('post-1044')), findsNothing); // a text post
 
-    await tester.scrollUntilVisible(find.byKey(const Key('post-1001')), 300,
+    await tester.tap(find.text('Text'));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('text-list')), findsOneWidget);
+    expect(find.byKey(const Key('post-1044')), findsOneWidget);
+    expect(find.descendant(of: find.byKey(const Key('post-1044')), matching: find.text('Chai at the cafeteria')),
+        findsOneWidget);
+    expect(find.byKey(const Key('post-1045')), findsNothing);
+  });
+
+  testWidgets('both tabs load later pages as you scroll', (tester) async {
+    final repo = await pumpProfile(tester);
+
+    await tester.scrollUntilVisible(find.byKey(const Key('post-1003')), 300,
         scrollable: find.byType(Scrollable).first);
     await tester.pumpAndSettle();
-
-    expect(find.byKey(const Key('post-1001')), findsOneWidget); // the oldest, on page 3
+    expect(find.byKey(const Key('post-1003')), findsOneWidget); // oldest photo, on page 3
     expect(repo.fetchPostsCalls, 2);
+
+    await tester.tap(find.text('Text'));
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(find.byKey(const Key('post-1001')), 300,
+        scrollable: find.byType(Scrollable).first);
+    expect(find.byKey(const Key('post-1001')), findsOneWidget); // oldest post overall
+    expect(repo.fetchPostsCalls, 2); // already loaded, nothing fetched twice
   });
 
   testWidgets('a failed next page shows retry and keeps loaded posts', (tester) async {
-    final repo = await pumpProfile(tester);
+    final repo = FakeProfileRepository(latency: Duration.zero);
+    await pumpProfile(tester, repo: repo);
+    final before = repo.fetchPostsCalls;
     repo.failWith = ApiException(503, 'Try again later.');
 
+    await tester.tap(find.text('Text'));
+    await tester.pumpAndSettle();
     await tester.scrollUntilVisible(find.textContaining('Tap to retry'), 300,
         scrollable: find.byType(Scrollable).first);
-    expect(find.byKey(const Key('post-1026')), findsOneWidget); // last post of page 1 still there
-    expect(repo.fetchPostsCalls, 1); // no retry loop
+    expect(repo.fetchPostsCalls, before + 1); // one failed attempt, no retry loop
+    expect(find.byKey(const Key('post-1044')), findsNothing); // scrolled past, but...
+    await tester.scrollUntilVisible(find.byKey(const Key('post-1044')), -300,
+        scrollable: find.byType(Scrollable).first);
+    expect(find.byKey(const Key('post-1044')), findsOneWidget); // ...loaded posts are still there
 
     repo.failWith = null;
+    await tester.dragUntilVisible(find.textContaining('Tap to retry'), find.byType(Scrollable).first,
+        const Offset(0, -300));
+    await tester.drag(find.byType(Scrollable).first, const Offset(0, -300)); // bring it fully into view
+    await tester.pumpAndSettle();
     await tester.tap(find.textContaining('Tap to retry'));
     await tester.pumpAndSettle();
     expect(find.textContaining('Tap to retry'), findsNothing);
-    expect(repo.fetchPostsCalls, greaterThanOrEqualTo(2));
+    expect(repo.fetchPostsCalls, greaterThan(before + 1));
   });
 
   testWidgets('tapping a post shows the coming-soon message', (tester) async {
@@ -148,5 +186,17 @@ void main() {
     await tester.pumpAndSettle();
     expect(repo.fetchProfileCalls, 2);
     expect(find.text('Fatima K.'), findsOneWidget);
+  });
+
+  testWidgets('Settings shows a coming-soon message', (tester) async {
+    await pumpProfile(tester);
+    await tester.tap(find.text('Settings'));
+    await tester.pump();
+    expect(find.text('Settings are coming soon.'), findsOneWidget);
+  });
+
+  test('a text post cut off by the API ends in an ellipsis', () {
+    expect(textPostLabel('x' * kExcerptLen), '${'x' * kExcerptLen}…');
+    expect(textPostLabel('short post'), 'short post');
   });
 }
