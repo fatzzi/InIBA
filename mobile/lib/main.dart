@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'core/theme.dart';
-import 'screens/welcome_screen.dart';
 import 'core/router/app_router.dart';
 
 void main() {
