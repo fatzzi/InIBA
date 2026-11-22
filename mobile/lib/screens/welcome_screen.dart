@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 /// Wireframe 1.1 - Welcome (no valid JWT).
-/// Layout: image placeholder, "InIba" title, tagline, then
+/// Layout: image placeholder, "InIBA" title, tagline, then
 /// Sign Up (filled), Log In (outlined) and the email hint at the bottom.
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
@@ -39,7 +39,7 @@ class WelcomeScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 24),
                     Text(
-                      'InIba',
+                      'InIBA',
                       textAlign: TextAlign.center,
                       style: theme.textTheme.headlineMedium?.copyWith(
                         fontWeight: FontWeight.bold,
@@ -60,7 +60,7 @@ class WelcomeScreen extends StatelessWidget {
                 onPressed: () => context.push('/signup'),
                 child: const Padding(
                   padding: EdgeInsets.symmetric(vertical: 12),
-                  child: Text('Sign Up'),
+                  child: Text('Sign Up with IBA email'),
                 ),
               ),
               const SizedBox(height: 12),
