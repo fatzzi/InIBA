@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 from starlette.datastructures import UploadFile
 
 from app.db import get_db
+from app.media_urls import absolute_url_fn
 from app.security import get_current_user
 from app.models import Student
 from app.pagination import DEFAULT_LIMIT
@@ -21,14 +22,7 @@ router = APIRouter(prefix="/profile", tags=["profile"])
 _LIST_FIELDS = ("societies", "tags")
 
 
-def _url_fn(request: Request) -> svc.UrlFn:
-    """Turn root-relative media paths (local storage) into absolute URLs for the app."""
-    base = str(request.base_url).rstrip("/")
-
-    def to_url(path: str | None) -> str | None:
-        return f"{base}{path}" if path and path.startswith("/") else path
-
-    return to_url
+_url_fn = absolute_url_fn
 
 
 def _parse_list(values: list[str]) -> list[str]:

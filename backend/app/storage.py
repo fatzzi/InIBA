@@ -18,6 +18,7 @@ MEDIA_URL = "/media"
 PROFILE_PHOTO_MIN_SIDE = 400
 SQUARE_TOLERANCE = 0.02  # 1:1 within 2%
 MAX_UPLOAD_BYTES = 5 * 1024 * 1024
+POST_IMAGE_MAX_BYTES = 10 * 1024 * 1024
 _FORMATS = {"JPEG": "jpg", "PNG": "png"}
 
 
@@ -62,4 +63,22 @@ def validate_profile_photo(data: bytes) -> str:
         raise HTTPException(400, f"Profile photo must be at least {PROFILE_PHOTO_MIN_SIDE}x{PROFILE_PHOTO_MIN_SIDE}")
     if abs(w - h) > SQUARE_TOLERANCE * max(w, h):
         raise HTTPException(400, "Profile photo must be square (1:1)")
+    return _FORMATS[fmt]
+
+
+def validate_post_image(data: bytes, field: str) -> str:
+    """Return the file extension for a valid post image, or raise 400.
+
+    Rules (API doc 4.3): JPEG or PNG, at most 10 MB. Any size or shape, since camera photos vary.
+    """
+    if len(data) > POST_IMAGE_MAX_BYTES:
+        raise HTTPException(400, f"{field} must be 10 MB or smaller")
+    try:
+        with Image.open(BytesIO(data)) as img:
+            fmt = img.format
+            img.verify()
+    except (UnidentifiedImageError, OSError, ValueError):
+        raise HTTPException(400, f"{field} must be a JPEG or PNG image")
+    if fmt not in _FORMATS:
+        raise HTTPException(400, f"{field} must be a JPEG or PNG image")
     return _FORMATS[fmt]
