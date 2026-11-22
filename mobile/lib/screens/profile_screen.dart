@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 /// Placeholder for the View Profile / Edit Profile use cases.
 /// Will be backed by GET /students/me once the API exists.
@@ -16,6 +17,11 @@ class ProfileScreen extends StatelessWidget {
             icon: const Icon(Icons.edit_outlined),
             tooltip: 'Edit profile',
           ),
+          IconButton(
+            onPressed: () => context.push('/settings'),
+            icon: const Icon(Icons.settings_outlined),
+            tooltip: 'Settings',
+          ),
         ],
       ),
       body: ListView(
@@ -24,7 +30,10 @@ class ProfileScreen extends StatelessWidget {
           const CircleAvatar(radius: 44, child: Icon(Icons.person, size: 44)),
           const SizedBox(height: 12),
           Center(
-            child: Text('Your Name', style: Theme.of(context).textTheme.titleLarge),
+            child: Text(
+              'Your Name',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
           ),
           Center(
             child: Text(
