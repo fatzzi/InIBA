@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, Uplo
 from sqlalchemy.orm import Session
 
 from app.db import get_db
-from app.deps import get_current_student
+from app.security import get_current_user
 from app.media_urls import absolute_url_fn
 from app.models import Student
 from app.schemas.posts import Message, PostOut
@@ -29,7 +29,7 @@ async def create_post(
     imageFront: UploadFile = File(None, description="Front camera photo, only together with imageBack"),
     locationTagId: int | None = Form(None, description="Optional campus zone (tagId). Empty or 0 means no zone"),
     isMoment: bool = Form(False, description="true when posted from the IBA Moment prompt"),
-    me: Student = Depends(get_current_student),
+    me: Student = Depends(get_current_user),
     db: Session = Depends(get_db),
     store: ImageStore = Depends(get_image_store),
 ) -> PostOut:
@@ -53,7 +53,7 @@ async def create_post(
 def get_post(
     post_id: int,
     request: Request,
-    me: Student = Depends(get_current_student),
+    me: Student = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> PostOut:
     """Full view of one post. Removed posts are 404."""
@@ -64,7 +64,7 @@ def get_post(
 @router.delete("/{post_id}", response_model=Message)
 def delete_post(
     post_id: int,
-    me: Student = Depends(get_current_student),
+    me: Student = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> Message:
     """Author only. Its reactions and comments are deleted with it."""

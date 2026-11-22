@@ -9,8 +9,8 @@ from sqlalchemy.orm import Session
 from starlette.datastructures import UploadFile
 
 from app.db import get_db
-from app.deps import get_current_student
 from app.media_urls import absolute_url_fn
+from app.security import get_current_user
 from app.models import Student
 from app.pagination import DEFAULT_LIMIT
 from app.schemas.profile import ProfileOut, ProfileUpdate, ProfileWithPosts
@@ -75,7 +75,7 @@ def get_profile(
     request: Request,
     offset: int = Query(0, ge=0),
     limit: int = Query(DEFAULT_LIMIT, ge=1),
-    _: Student = Depends(get_current_student),
+    _: Student = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> ProfileWithPosts:
     """Any logged-in student can view any profile. Email is never included. `limit` is capped at 50."""
@@ -107,7 +107,7 @@ def get_profile(
 async def update_profile(
     student_id: int,
     request: Request,
-    me: Student = Depends(get_current_student),
+    me: Student = Depends(get_current_user),
     db: Session = Depends(get_db),
     store: ImageStore = Depends(get_image_store),
 ) -> ProfileOut:
