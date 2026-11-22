@@ -1,16 +1,24 @@
 from fastapi import Depends, FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from app.db import get_db
 from app.errors import install_error_handlers
-from app.routers import profile
+from app.routers import auth, profile
 from app.storage import MEDIA_ROOT, MEDIA_URL
 
 app = FastAPI(title="InIBA API", version="0.1.0")
 install_error_handlers(app)
-
+# Lets the Flutter app run in Chrome (flutter run -d chrome) call the API on localhost.
+app.add_middleware(
+    CORSMiddleware,
+    allow_origin_regex=r"http://(localhost|127\.0\.0\.1)(:\d+)?",
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+app.include_router(auth.router)
 app.include_router(profile.router)
 
 # Local image storage (see app/storage.py). A cloud store will serve its own URLs instead.
