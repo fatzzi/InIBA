@@ -30,6 +30,7 @@ env/
 *.db
 *.sqlite3
 .pytest_cache/
+backend/media/
 
 # Env / secrets
 .env
