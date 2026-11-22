@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import '../../core/api_client.dart';
 import 'profile_model.dart';
 
@@ -9,7 +11,20 @@ abstract class ProfileRepository {
 
   /// A later page of the post grid.
   Future<PagedList<PostThumb>> fetchPosts(int studentId, {required int offset, int limit = kPostPageSize});
+
+  /// Owner-only edit. Returns the updated profile (without posts).
+  Future<Profile> updateProfile(int studentId, ProfileEdit edit);
 }
+
+/// Societies the app offers when adding one. There is no `GET /societies` endpoint yet, so this mirrors
+/// the names `backend/scripts/seed.py` creates; the backend rejects any other name with 400.
+const kKnownSocieties = [
+  'Debating Society',
+  'Drama Society',
+  'IEEE',
+  'Music Society',
+  'Entrepreneurship Club',
+];
 
 /// Talks to `GET /profile/{id}` on the backend.
 class HttpProfileRepository implements ProfileRepository {
@@ -28,6 +43,27 @@ class HttpProfileRepository implements ProfileRepository {
     final json = await _api.getJson('/profile/$studentId', query: {'offset': offset, 'limit': limit});
     return Profile.fromJson(json).posts;
   }
+
+  @override
+  Future<Profile> updateProfile(int studentId, ProfileEdit edit) async {
+    final photo = edit.photoJpeg;
+    final Map<String, dynamic> json;
+    if (photo == null) {
+      json = await _api.sendJson('PATCH', '/profile/$studentId', edit.toJson());
+    } else {
+      json = await _api.sendMultipart(
+        'PATCH',
+        '/profile/$studentId',
+        fields: {
+          'bio': edit.bio,
+          'moodSticker': edit.moodSticker ?? '',
+          'societies': jsonEncode(edit.societies),
+        },
+        files: {'profilePhoto': ('profile.jpg', photo)},
+      );
+    }
+    return Profile.fromJson(json);
+  }
 }
 
 /// In-memory sample data, used when no `API_BASE_URL` is given and in tests.
@@ -37,7 +73,7 @@ class FakeProfileRepository implements ProfileRepository {
     Map<int, Profile>? profiles,
     Map<int, int>? postCounts,
     this.failWith,
-  })  : _profiles = profiles ?? sampleProfiles,
+  })  : _profiles = Map.of(profiles ?? sampleProfiles),
         _postCounts = postCounts ?? const {1: 45, 2: 9, 3: 0};
 
   final Duration latency;
@@ -49,6 +85,7 @@ class FakeProfileRepository implements ProfileRepository {
 
   int fetchProfileCalls = 0;
   int fetchPostsCalls = 0;
+  final List<ProfileEdit> edits = [];
 
   static const sampleProfiles = {
     1: Profile(
@@ -131,5 +168,22 @@ class FakeProfileRepository implements ProfileRepository {
     fetchPostsCalls++;
     await _wait();
     return _page(studentId, offset, limit);
+  }
+
+  @override
+  Future<Profile> updateProfile(int studentId, ProfileEdit edit) async {
+    edits.add(edit);
+    await _wait();
+    final p = _profiles[studentId];
+    if (p == null) throw ApiException(404, 'Student not found');
+    final updated = p.copyWith(
+      bio: edit.bio,
+      moodSticker: edit.moodSticker,
+      clearMood: edit.moodSticker == null,
+      societies: [...edit.societies]..sort(),
+      profilePhoto: edit.photoJpeg == null ? null : 'fake://photo/${edits.length}.jpg',
+    );
+    _profiles[studentId] = updated;
+    return updated;
   }
 }

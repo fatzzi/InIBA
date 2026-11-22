@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/api_client.dart';
+import 'edit_profile_screen.dart';
 import 'profile_model.dart';
 import 'profile_providers.dart';
 
@@ -27,6 +28,12 @@ class ProfileScreen extends ConsumerWidget {
         // Your own profile is a bottom-nav tab, so it has no back button (wireframe 3.1).
         automaticallyImplyLeading: !isOwn,
         title: Text(isOwn ? 'Profile' : (state.valueOrNull?.profile.name ?? 'Profile')),
+        bottom: (state.valueOrNull?.saving ?? false)
+            ? const PreferredSize(
+                preferredSize: Size.fromHeight(2),
+                child: LinearProgressIndicator(key: Key('saving-indicator'), minHeight: 2),
+              )
+            : null,
         actions: [
           if (isOwn)
             TextButton(
@@ -106,7 +113,7 @@ class _ProfileBodyState extends State<_ProfileBody> with SingleTickerProviderSta
       slivers: [
         SliverPadding(
           padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
-          sliver: SliverToBoxAdapter(child: _Header(profile: data.profile, isOwn: widget.isOwn)),
+          sliver: SliverToBoxAdapter(child: _Header(data: data, isOwn: widget.isOwn)),
         ),
         SliverPersistentHeader(
           pinned: true,
@@ -190,13 +197,14 @@ class _TabBarHeader extends SliverPersistentHeaderDelegate {
 }
 
 class _Header extends StatelessWidget {
-  const _Header({required this.profile, required this.isOwn});
+  const _Header({required this.data, required this.isOwn});
 
-  final Profile profile;
+  final ProfileState data;
   final bool isOwn;
 
   @override
   Widget build(BuildContext context) {
+    final profile = data.profile;
     final theme = Theme.of(context);
     // Wireframe 3.1: "2027 · Business · Debating" as one line under the name.
     final details = [
@@ -213,7 +221,7 @@ class _Header extends StatelessWidget {
         Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            _Avatar(url: profile.profilePhoto, name: profile.name),
+            ProfileAvatar(radius: 42, name: profile.name, bytes: data.localPhoto, url: profile.profilePhoto),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
@@ -236,7 +244,7 @@ class _Header extends StatelessWidget {
         ),
         if (mood != null && mood.isNotEmpty) ...[
           const SizedBox(height: 14),
-          Pill(key: const Key('mood-pill'), label: 'Mood: $mood'),
+          Pill(key: const Key('mood-pill'), label: 'Mood: ${moodLabel(mood)}'),
         ],
         if (bio != null && bio.isNotEmpty) ...[
           const SizedBox(height: 12),
@@ -256,44 +264,19 @@ class _Header extends StatelessWidget {
           SizedBox(
             width: double.infinity,
             child: OutlinedButton(
-              onPressed: () => Navigator.of(context).push(
-                MaterialPageRoute<void>(builder: (_) => const _ComingSoonScreen(title: 'Edit profile')),
-              ),
+              onPressed: data.saving
+                  ? null
+                  : () => Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => EditProfileScreen(studentId: profile.studentId),
+                          fullscreenDialog: true,
+                        ),
+                      ),
               child: const Text('Edit profile'),
             ),
           ),
         ],
       ],
-    );
-  }
-}
-
-class _Avatar extends StatelessWidget {
-  const _Avatar({required this.url, required this.name});
-
-  final String? url;
-  final String name;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final initial = name.trim().isEmpty ? '?' : name.trim()[0].toUpperCase();
-    final fallback = Center(
-      child: Text(initial, style: TextStyle(fontSize: 30, color: scheme.onPrimaryContainer)),
-    );
-    final photo = url;
-    return Container(
-      width: 84,
-      height: 84,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: scheme.primaryContainer,
-        border: Border.all(color: scheme.outlineVariant),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: photo == null || photo.isEmpty
-          ? fallback
-          : Image.network(photo, width: 84, height: 84, fit: BoxFit.cover, errorBuilder: (_, _, _) => fallback),
     );
   }
 }
@@ -460,20 +443,6 @@ class _ErrorView extends StatelessWidget {
           ],
         ),
       ),
-    );
-  }
-}
-
-class _ComingSoonScreen extends StatelessWidget {
-  const _ComingSoonScreen({required this.title});
-
-  final String title;
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text(title)),
-      body: const Center(child: Text('Coming soon.')),
     );
   }
 }

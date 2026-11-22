@@ -33,12 +33,12 @@ void main() {
 
     expect(find.text('Fatima K.'), findsOneWidget);
     expect(find.text('2027 · Business · Debating Society'), findsOneWidget); // one line, as in wireframe 3.1
-    for (final pill in ['#nightowl', '#chai', '7 day streak', 'Mood: need coffee']) {
+    for (final pill in ['#nightowl', '#chai', '7 day streak', 'Mood: ☕ need coffee']) {
       expect(find.widgetWithText(Pill, pill), findsOneWidget, reason: pill);
     }
     expect(find.text('Settings'), findsOneWidget);
     expect(find.byType(BackButton), findsNothing); // own profile is a tab, no back arrow
-    expect(find.text('Mood: need coffee'), findsOneWidget);
+    expect(find.text('Mood: ☕ need coffee'), findsOneWidget);
     expect(find.text('spreadsheet enthusiast, tea over coffee.'), findsOneWidget);
     expect(find.text('7 day streak'), findsOneWidget);
     expect(find.text('Edit profile'), findsOneWidget);
@@ -54,7 +54,7 @@ void main() {
     await pumpProfile(tester, studentId: 2);
 
     expect(find.text('Sara A.'), findsNWidgets(2)); // app bar + header
-    expect(find.text('Mood: midterms'), findsOneWidget);
+    expect(find.text('Mood: 😵 midterms'), findsOneWidget);
     expect(find.text('12 day streak'), findsOneWidget);
     expect(find.text('Edit profile'), findsNothing);
     expect(find.text('Settings'), findsNothing);
@@ -62,11 +62,12 @@ void main() {
     expect(find.textContaining('@'), findsNothing);
   });
 
-  testWidgets('Edit profile opens a placeholder', (tester) async {
+  testWidgets('Edit profile opens the edit screen', (tester) async {
     await pumpProfile(tester);
     await tester.tap(find.text('Edit profile'));
     await tester.pumpAndSettle();
-    expect(find.text('Coming soon.'), findsOneWidget);
+    expect(find.text('Change photo'), findsOneWidget);
+    expect(find.text('Save'), findsOneWidget);
   });
 
   testWidgets('student with no posts shows an empty state', (tester) async {

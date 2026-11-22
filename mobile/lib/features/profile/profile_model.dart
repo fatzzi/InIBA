@@ -1,5 +1,7 @@
-/// Models for `GET /profile/{id}` (API doc 3.2). Email is never part of a profile.
+/// Models for `GET/PATCH /profile/{id}` (API doc 3.2, 3.3). Email is never part of a profile.
 library;
+
+import 'dart:typed_data';
 
 class PostThumb {
   const PostThumb({required this.postId, this.thumbnail, this.excerpt});
@@ -77,6 +79,45 @@ class Profile {
             : const PagedList(items: [], isMore: false),
       );
 
+  Profile copyWith({
+    String? bio,
+    String? moodSticker,
+    bool clearMood = false,
+    List<String>? societies,
+    String? profilePhoto,
+    PagedList<PostThumb>? posts,
+  }) =>
+      Profile(
+        studentId: studentId,
+        name: name,
+        batch: batch,
+        department: department,
+        profilePhoto: profilePhoto ?? this.profilePhoto,
+        bio: bio ?? this.bio,
+        moodSticker: clearMood ? null : (moodSticker ?? this.moodSticker),
+        societies: societies ?? this.societies,
+        streak: streak,
+        tags: tags,
+        posts: posts ?? this.posts,
+      );
+
   static List<String> _strings(Object? value) =>
       value is List ? [for (final v in value) '$v'] : const [];
+}
+
+/// What the Edit profile screen saves (API doc 3.3). Text fields are always sent with their current
+/// values; an empty bio or a null mood clears it. [photoJpeg] is only set when a new photo was cropped.
+class ProfileEdit {
+  const ProfileEdit({required this.bio, this.moodSticker, required this.societies, this.photoJpeg});
+
+  final String bio;
+  final String? moodSticker;
+  final List<String> societies;
+  final Uint8List? photoJpeg;
+
+  Map<String, Object?> toJson() => {
+        'bio': bio,
+        'moodSticker': moodSticker ?? '',
+        'societies': societies,
+      };
 }

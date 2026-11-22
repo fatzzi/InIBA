@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
 
@@ -40,6 +41,41 @@ class ApiClient {
     final http.Response res;
     try {
       res = await _http.get(uri(path, query), headers: _headers);
+    } on Exception {
+      throw ApiException(0, 'Could not reach the server. Check your connection.');
+    }
+    return _decode(res);
+  }
+
+  /// Send a JSON body with [method] (e.g. PATCH).
+  Future<Map<String, dynamic>> sendJson(String method, String path, Map<String, Object?> body) async {
+    final req = http.Request(method, uri(path))
+      ..headers.addAll(_headers)
+      ..headers['Content-Type'] = 'application/json'
+      ..body = jsonEncode(body);
+    return _send(req);
+  }
+
+  /// Send `multipart/form-data` with text [fields] and in-memory [files] (field name -> filename + bytes).
+  Future<Map<String, dynamic>> sendMultipart(
+    String method,
+    String path, {
+    Map<String, String> fields = const {},
+    Map<String, (String, Uint8List)> files = const {},
+  }) async {
+    final req = http.MultipartRequest(method, uri(path))
+      ..headers.addAll(_headers)
+      ..fields.addAll(fields);
+    for (final f in files.entries) {
+      req.files.add(http.MultipartFile.fromBytes(f.key, f.value.$2, filename: f.value.$1));
+    }
+    return _send(req);
+  }
+
+  Future<Map<String, dynamic>> _send(http.BaseRequest req) async {
+    final http.Response res;
+    try {
+      res = await http.Response.fromStream(await _http.send(req));
     } on Exception {
       throw ApiException(0, 'Could not reach the server. Check your connection.');
     }

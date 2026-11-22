@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
@@ -74,5 +75,50 @@ void main() {
     final client = MockClient((_) async => http.Response('<html>bad gateway</html>', 502));
     final repo = HttpProfileRepository(ApiClient(baseUrl: 'http://x', httpClient: client));
     expect(() => repo.fetchProfile(1), throwsA(isA<ApiException>().having((e) => e.code, 'code', 502)));
+  });
+
+  test('updateProfile without a photo sends a JSON PATCH', () async {
+    late http.Request seen;
+    final client = MockClient((req) async {
+      seen = req;
+      return http.Response(jsonEncode({...contractExample}..remove('posts')), 200);
+    });
+    final repo = HttpProfileRepository(ApiClient(baseUrl: 'http://x', token: 't', httpClient: client));
+    await repo.updateProfile(12, const ProfileEdit(bio: 'hi', moodSticker: null, societies: ['IEEE']));
+
+    expect(seen.method, 'PATCH');
+    expect(seen.url.path, '/profile/12');
+    expect(seen.headers['Content-Type'], startsWith('application/json'));
+    expect(seen.headers['Authorization'], 'Bearer t');
+    expect(jsonDecode(seen.body), {'bio': 'hi', 'moodSticker': '', 'societies': ['IEEE']});
+  });
+
+  test('updateProfile with a photo sends multipart with profilePhoto', () async {
+    late String contentType;
+    late String body;
+    final client = MockClient((req) async {
+      contentType = req.headers['content-type'] ?? req.headers['Content-Type']!;
+      body = latin1.decode(req.bodyBytes);
+      return http.Response(jsonEncode(contractExample), 200);
+    });
+    final repo = HttpProfileRepository(ApiClient(baseUrl: 'http://x', httpClient: client));
+    await repo.updateProfile(
+      12,
+      ProfileEdit(bio: 'b', moodSticker: 'late', societies: const ['IEEE', 'Drama Society'], photoJpeg: Uint8List.fromList([1, 2, 3])),
+    );
+
+    expect(contentType, startsWith('multipart/form-data'));
+    expect(body, contains('name="profilePhoto"; filename="profile.jpg"'));
+    expect(body, contains('name="moodSticker"'));
+    expect(body, contains('["IEEE","Drama Society"]'));
+  });
+
+  test('a rejected PATCH surfaces the server message', () async {
+    final client = MockClient((_) async => http.Response('{"code":400,"message":"Unknown society: X"}', 400));
+    final repo = HttpProfileRepository(ApiClient(baseUrl: 'http://x', httpClient: client));
+    expect(
+      () => repo.updateProfile(1, const ProfileEdit(bio: '', societies: ['X'])),
+      throwsA(isA<ApiException>().having((e) => e.message, 'message', 'Unknown society: X')),
+    );
   });
 }

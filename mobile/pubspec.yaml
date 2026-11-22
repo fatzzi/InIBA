@@ -40,6 +40,7 @@ dependencies:
   flutter_secure_storage: ^9.2.4
   http: ^1.2.2
   image_picker: ^1.2.4
+  image: ^4.13.1
   permission_handler: ^13.0.2
 
 dev_dependencies:
