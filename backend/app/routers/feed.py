@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, Query, Request
 from sqlalchemy.orm import Session
 
 from app.db import get_db
-from app.deps import get_current_student
+from app.security import get_current_user
 from app.media_urls import absolute_url_fn
 from app.models import Student
 from app.pagination import DEFAULT_LIMIT
@@ -19,7 +19,7 @@ def get_feed(
     request: Request,
     offset: int = Query(0, ge=0),
     limit: int = Query(DEFAULT_LIMIT, ge=1, description="Default 20, capped at 50"),
-    me: Student = Depends(get_current_student),
+    me: Student = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> FeedPage:
     """Recent posts from verified students, newest first. An empty `items` list means the app shows its empty state."""

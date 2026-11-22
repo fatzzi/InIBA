@@ -5,7 +5,7 @@ from datetime import datetime, timedelta, timezone
 import pytest
 from sqlalchemy import event
 
-from app.deps import get_current_student
+from app.security import get_current_user
 from app.main import app
 from app.models import Comment, LocationTag, Post, Reaction, Student
 
@@ -26,7 +26,7 @@ def people(db_session):
 @pytest.fixture()
 def login(client):
     def as_(student: Student):
-        app.dependency_overrides[get_current_student] = lambda: student
+        app.dependency_overrides[get_current_user] = lambda: student
         return client
 
     return as_
