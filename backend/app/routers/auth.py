@@ -7,8 +7,8 @@ from sqlalchemy.orm import Session
 from app.config import get_settings
 from app.db import get_db
 from app.models import Student
-from app.otp import issue_otp, send_otp_email
-from app.schemas.auth import RegisterRequest, RegisterResponse
+from app.otp import enforce_resend_cooldown, issue_otp, send_otp_email
+from app.schemas.auth import RegisterRequest, RegisterResponse, ResendOtpRequest, ResendOtpResponse
 from app.security import hash_password
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -41,6 +41,26 @@ def register(body: RegisterRequest, db: Session = Depends(get_db)) -> RegisterRe
 
     send_otp_email(student.email, code)
     return RegisterResponse(
+        message=f"OTP sent to {student.email}",
+        expires_in_minutes=get_settings().otp_expire_minutes,
+    )
+
+
+@router.post("/resend-otp", response_model=ResendOtpResponse)
+def resend_otp(body: ResendOtpRequest, db: Session = Depends(get_db)) -> ResendOtpResponse:
+    """SCRUM-20. 404 unknown account, 409 already verified, 429 too soon, 200 fresh code sent."""
+    student = db.scalar(select(Student).where(Student.email == body.email))
+    if student is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Account not found")
+    if student.is_verified:
+        raise HTTPException(status.HTTP_409_CONFLICT, "Account already verified")
+
+    enforce_resend_cooldown(db, student)  # before issue_otp deletes the old code
+    code = issue_otp(db, student)
+    db.commit()
+
+    send_otp_email(student.email, code)
+    return ResendOtpResponse(
         message=f"OTP sent to {student.email}",
         expires_in_minutes=get_settings().otp_expire_minutes,
     )

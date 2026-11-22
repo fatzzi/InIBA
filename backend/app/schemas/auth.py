@@ -1,10 +1,21 @@
-"""Request/response bodies for /auth (API doc section 2). JSON uses camelCase, Python uses snake_case."""
+"""Request/response bodies for /auth (API doc section 2).
+
+JSON uses camelCase, Python uses snake_case.
+"""
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator, model_validator
 from pydantic.alias_generators import to_camel
 
 from app.config import get_settings
 from app.security import BCRYPT_MAX_BYTES
+
+
+def _normalise_iba_email(value: str) -> str:
+    email = value.strip().lower()
+    domain = get_settings().allowed_email_domain.lower()
+    if not email.endswith("@" + domain):
+        raise ValueError(f"Only @{domain} email addresses can register")
+    return email
 
 
 class CamelModel(BaseModel):
@@ -20,11 +31,7 @@ class RegisterRequest(CamelModel):
     @field_validator("email")
     @classmethod
     def iba_domain_only(cls, value: str) -> str:
-        email = value.strip().lower()
-        domain = get_settings().allowed_email_domain.lower()
-        if not email.endswith("@" + domain):
-            raise ValueError(f"Only @{domain} email addresses can register")
-        return email
+        return _normalise_iba_email(value)
 
     @field_validator("name")
     @classmethod
@@ -48,5 +55,19 @@ class RegisterRequest(CamelModel):
 
 
 class RegisterResponse(CamelModel):
+    message: str
+    expires_in_minutes: int
+
+
+class ResendOtpRequest(CamelModel):
+    email: EmailStr
+
+    @field_validator("email")
+    @classmethod
+    def iba_domain_only(cls, value: str) -> str:
+        return _normalise_iba_email(value)
+
+
+class ResendOtpResponse(CamelModel):
     message: str
     expires_in_minutes: int
