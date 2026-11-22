@@ -39,5 +39,10 @@ class PostOut(_Camel):
     your_reaction: str | None
 
 
+class FeedPage(_Camel):
+    is_more: bool
+    items: list[PostOut]
+
+
 class Message(BaseModel):
     message: str

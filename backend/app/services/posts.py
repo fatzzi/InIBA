@@ -72,27 +72,52 @@ def get_post_or_404(db: Session, post_id: int, *, include_removed: bool = False)
     return post
 
 
-def to_out(db: Session, post: Post, viewer: Student, url: UrlFn = _identity) -> PostOut:
-    reactions = db.scalar(select(func.count()).select_from(Reaction).where(Reaction.post_id == post.id)) or 0
-    comments = db.scalar(select(func.count()).select_from(Comment).where(Comment.post_id == post.id)) or 0
-    mine = db.scalar(select(Reaction.kind).where(Reaction.post_id == post.id, Reaction.student_id == viewer.id))
-    author = post.author
-    tag = post.location_tag
-    return PostOut(
-        post_id=post.id,
-        student_id=author.id,
-        author=Author(student_id=author.id, name=author.name, profile_photo=url(author.profile_photo)),
-        content=post.content,
-        image_back=url(post.image_back),
-        image_front=url(post.image_front),
-        timestamp=_as_utc(post.created_at),
-        is_removed=post.is_removed,
-        is_moment=post.is_moment,
-        location_tag=LocationTagOut(tag_id=tag.id, zone_name=tag.zone_name) if tag else None,
-        reaction_count=reactions,
-        comment_count=comments,
-        your_reaction=mine,
+def to_out_many(db: Session, posts: list[Post], viewer: Student, url: UrlFn = _identity) -> list[PostOut]:
+    """Build the API shape for several posts with three queries in total, not three per post."""
+    if not posts:
+        return []
+    ids = [p.id for p in posts]
+    reactions = dict(
+        db.execute(
+            select(Reaction.post_id, func.count()).where(Reaction.post_id.in_(ids)).group_by(Reaction.post_id)
+        ).all()
     )
+    comments = dict(
+        db.execute(
+            select(Comment.post_id, func.count()).where(Comment.post_id.in_(ids)).group_by(Comment.post_id)
+        ).all()
+    )
+    mine = dict(
+        db.execute(
+            select(Reaction.post_id, Reaction.kind).where(Reaction.post_id.in_(ids), Reaction.student_id == viewer.id)
+        ).all()
+    )
+    out = []
+    for post in posts:
+        author = post.author
+        tag = post.location_tag
+        out.append(
+            PostOut(
+                post_id=post.id,
+                student_id=author.id,
+                author=Author(student_id=author.id, name=author.name, profile_photo=url(author.profile_photo)),
+                content=post.content,
+                image_back=url(post.image_back),
+                image_front=url(post.image_front),
+                timestamp=_as_utc(post.created_at),
+                is_removed=post.is_removed,
+                is_moment=post.is_moment,
+                location_tag=LocationTagOut(tag_id=tag.id, zone_name=tag.zone_name) if tag else None,
+                reaction_count=reactions.get(post.id, 0),
+                comment_count=comments.get(post.id, 0),
+                your_reaction=mine.get(post.id),
+            )
+        )
+    return out
+
+
+def to_out(db: Session, post: Post, viewer: Student, url: UrlFn = _identity) -> PostOut:
+    return to_out_many(db, [post], viewer, url)[0]
 
 
 def delete_post(db: Session, post: Post, me: Student) -> None:
