@@ -9,7 +9,7 @@ import pytest
 from PIL import Image
 
 from app.config import get_settings
-from app.deps import get_current_student
+from app.security import get_current_user
 from app.main import app
 from app.models import Post, Society, Student
 from app.services.profile import CAMPUS_TZ, streak_from_days
@@ -38,7 +38,7 @@ def as_student(client):
     """Log in as a student by overriding the JWT dependency."""
 
     def login(student: Student):
-        app.dependency_overrides[get_current_student] = lambda: student
+        app.dependency_overrides[get_current_user] = lambda: student
         return client
 
     return login
@@ -123,7 +123,7 @@ def test_no_token_is_401(client, people):
 
 
 def test_real_jwt_dependency(client, people):
-    """The stand-in JWT dependency accepts a signed token and rejects bad ones."""
+    """The JWT dependency (app.security) accepts a signed token and rejects bad ones."""
     a, _ = people
     secret = get_settings().jwt_secret
     good = jwt.encode({"sub": str(a.id)}, secret, algorithm="HS256")
