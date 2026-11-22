@@ -115,7 +115,9 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
           ),
           const SizedBox(height: 12),
           OutlinedButton.icon(
-            onPressed: () {},
+            onPressed: () => ScaffoldMessenger.of(context)
+              ..hideCurrentSnackBar()
+              ..showSnackBar(const SnackBar(content: Text('Text posts are coming soon.'))),
             icon: const Icon(Icons.edit_outlined),
             label: const Text('Write a text post'),
           ),
