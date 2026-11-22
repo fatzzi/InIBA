@@ -1,7 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/network/api_client.dart';
+import '../../../core/api_client.dart';
 
 class AuthException implements Exception {
   AuthException(this.message, {this.statusCode});

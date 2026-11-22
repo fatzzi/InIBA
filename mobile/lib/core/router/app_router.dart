@@ -10,6 +10,7 @@ import '../../features/auth/presentation/screens/verify_otp_screen.dart';
 import '../../features/settings/settings_screen.dart';
 import '../../screens/home_shell.dart';
 import '../../screens/welcome_screen.dart';
+import '../../features/profile/profile_screen.dart';
 
 const _publicRoutes = {'/welcome', '/signup', '/login', '/verify'};
 
@@ -54,6 +55,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(path: '/feed', builder: (_, _) => const HomeShell()),
       GoRoute(path: '/settings', builder: (_, _) => const SettingsScreen()),
+      GoRoute(path: '/profile', builder: (_, _) => const ProfileScreen()),
     ],
   );
 });
