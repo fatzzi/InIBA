@@ -2,6 +2,7 @@ import os
 
 # Tests always run against an in-memory SQLite database, never a real one.
 os.environ["DATABASE_URL"] = "sqlite://"
+os.environ["SMTP_HOST"] = ""  # tests must never send real email
 
 import pytest
 from fastapi.testclient import TestClient

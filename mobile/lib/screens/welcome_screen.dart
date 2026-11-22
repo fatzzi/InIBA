@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-
 /// Wireframe 1.1 - Welcome (no valid JWT).
 /// Layout: image placeholder, "InIBA" title, tagline, then
 /// Sign Up (filled), Log In (outlined) and the email hint at the bottom.

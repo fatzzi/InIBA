@@ -6,11 +6,13 @@ from sqlalchemy import (
     Boolean,
     Date,
     DateTime,
+    JSON,
     ForeignKey,
     Integer,
     String,
     Text,
     UniqueConstraint,
+    text,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -35,10 +37,12 @@ class Student(Base):
     bio: Mapped[str | None] = mapped_column(String(280))
     profile_photo: Mapped[str | None] = mapped_column(String(500))
     mood_sticker: Mapped[str | None] = mapped_column(String(40))
+    mood_set_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    tags: Mapped[list[str]] = mapped_column(JSON, default=list, server_default=text("'[]'"))  # student-written, max 5 (API doc 3.3)
     role: Mapped[str] = mapped_column(String(10), default="student")  # student | admin
     is_verified: Mapped[bool] = mapped_column(Boolean, default=False)
     is_suspended: Mapped[bool] = mapped_column(Boolean, default=False)
-    streak_count: Mapped[int] = mapped_column(Integer, default=0)
+    streak_count: Mapped[int] = mapped_column(Integer, default=0)  # unused: streak is computed from posts
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
 
     societies: Mapped[list["Society"]] = relationship(secondary="student_societies", back_populates="members")

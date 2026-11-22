@@ -42,9 +42,13 @@ dependencies:
   image_picker: ^1.2.4
   image: ^4.13.1
   permission_handler: ^13.0.2
+<<<<<<< HEAD
   go_router: ^18.1.4
   dio: ^5.11.1
   
+=======
+
+>>>>>>> origin/main
 dev_dependencies:
   flutter_test:
     sdk: flutter
