@@ -8,8 +8,14 @@ from app.config import get_settings
 from app.db import get_db
 from app.models import Student
 from app.otp import enforce_resend_cooldown, issue_otp, send_otp_email
-from app.schemas.auth import RegisterRequest, RegisterResponse, ResendOtpRequest, ResendOtpResponse
-from app.security import hash_password
+from app.schemas.auth import (
+    LogoutResponse,
+    RegisterRequest,
+    RegisterResponse,
+    ResendOtpRequest,
+    ResendOtpResponse,
+)
+from app.security import get_current_user, hash_password
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -64,3 +70,15 @@ def resend_otp(body: ResendOtpRequest, db: Session = Depends(get_db)) -> ResendO
         message=f"OTP sent to {student.email}",
         expires_in_minutes=get_settings().otp_expire_minutes,
     )
+
+@router.post("/logout", response_model=LogoutResponse)
+def logout(current_user: Student = Depends(get_current_user), db: Session = Depends(get_db)) -> LogoutResponse:
+    """SCRUM-70. End the session so nobody else can use this account on the device.
+
+    Bumps the student's token_version, so the JWT the app was holding (and any copy of it)
+    gets 401 from now on. The app also deletes its stored JWT. Because the version is per
+    student, this signs the student out on every device, not just this one.
+    """
+    current_user.token_version = (current_user.token_version or 0) + 1
+    db.commit()
+    return LogoutResponse(message="Logged out")

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:iniba/core/api_client.dart';
 import 'package:iniba/features/profile/profile_providers.dart';
 import 'package:iniba/features/profile/profile_repository.dart';
@@ -189,11 +190,29 @@ void main() {
     expect(find.text('Fatima K.'), findsOneWidget);
   });
 
-  testWidgets('Settings shows a coming-soon message', (tester) async {
-    await pumpProfile(tester);
+  testWidgets('Settings opens the settings screen (SCRUM-70)', (tester) async {
+    final router = GoRouter(
+      routes: [
+        GoRoute(path: '/', builder: (_, _) => const ProfileScreen()),
+        GoRoute(
+          path: '/settings',
+          builder: (_, _) => const Scaffold(body: Text('settings page')),
+        ),
+      ],
+    );
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          currentStudentIdProvider.overrideWithValue(me),
+          profileRepositoryProvider.overrideWithValue(FakeProfileRepository(latency: Duration.zero)),
+        ],
+        child: MaterialApp.router(routerConfig: router),
+      ),
+    );
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Settings'));
-    await tester.pump();
-    expect(find.text('Settings are coming soon.'), findsOneWidget);
+    await tester.pumpAndSettle();
+    expect(find.text('settings page'), findsOneWidget);
   });
 
   test('a text post cut off by the API ends in an ellipsis', () {

@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/storage/secure_storage.dart';
+import '../../profile/profile_providers.dart';
 import '../data/auth_repository.dart';
 
 enum AuthStatus { unknown, unauthenticated, authenticated }
@@ -135,10 +136,37 @@ class AuthController extends Notifier<AuthState> {
     }
   }
 
-  /// 1.8: clears the JWT locally and returns to Welcome.
+  /// 1.8 / SCRUM-70: ends the session so nobody else can use the account on this device.
+  /// 1. Tells the backend to revoke the JWT (best effort, never blocks logout).
+  /// 2. Deletes the JWT from secure storage.
+  /// 3. Drops cached data of the old user (profile, posts) from memory.
+  /// 4. Sets status to unauthenticated -> the router sends the user to /welcome.
   Future<void> logout() async {
-    await _tokens.clear();
-    state = const AuthState(status: AuthStatus.unauthenticated);
+    if (state.isLoading) return;
+    state = state.copyWith(isLoading: true, clearError: true);
+    try {
+      await _repo.logout();
+    } catch (_) {
+      // Ignore: logging out must work offline too.
+    }
+    await _endSession();
+  }
+
+  /// Used when the server says the token is no longer valid (401), e.g. it was
+  /// revoked by logging out on another device or it expired. No server call.
+  Future<void> sessionExpired() async {
+    if (state.status != AuthStatus.authenticated) return;
+    await _endSession(error: 'Your session has ended. Please log in again.');
+  }
+
+  Future<void> _endSession({String? error}) async {
+    try {
+      await _tokens.clear();
+    } catch (_) {
+      // storage unavailable (e.g. in tests); state below still logs the user out
+    }
+    ref.invalidate(profileControllerProvider);
+    state = AuthState(status: AuthStatus.unauthenticated, error: error);
   }
 }
 

@@ -6,6 +6,8 @@ import '../core/storage/secure_storage.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../features/auth/presentation/auth_controller.dart';
+
 const String kBaseUrl = 'http://10.0.2.2:8000';
 /// Error from the API, using its standard `{code, message}` body (API doc 1.3).
 class ApiException implements Exception {
@@ -118,6 +120,15 @@ class ApiClient {
           options.headers['Authorization'] = 'Bearer $token';
         }
         handler.next(options);
+      },
+      // SCRUM-70: a revoked or expired token gets 401 -> drop it and go to Welcome.
+      // Login/verify/logout return 401 for their own reasons, so they are skipped.
+      onError: (error, handler) {
+        final path = error.requestOptions.path;
+        if (error.response?.statusCode == 401 && !path.startsWith('/auth/')) {
+          ref.read(authProvider.notifier).sessionExpired();
+        }
+        handler.next(error);
       },
     ),
   );
