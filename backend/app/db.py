@@ -11,8 +11,11 @@ class Base(DeclarativeBase):
 
 
 def _make_engine(url: str):
-    kwargs = {"connect_args": {"check_same_thread": False}} if url.startswith("sqlite") else {"pool_pre_ping": True}
-    return create_engine(url, **kwargs)
+    if url.startswith("sqlite"):
+        return create_engine(url, connect_args={"check_same_thread": False})
+    # Supabase's free session pooler allows ~15 client connections. The public API takes up to 10, leaving room
+    # for a developer laptop or the seed script. pre_ping drops connections the host closed.
+    return create_engine(url, pool_pre_ping=True, pool_size=5, max_overflow=5, pool_recycle=300)
 
 
 engine = _make_engine(get_settings().database_url)

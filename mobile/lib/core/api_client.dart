@@ -6,7 +6,9 @@ import '../core/storage/secure_storage.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-const String kBaseUrl = 'http://10.0.2.2:8000';
+/// Backend address. Defaults to your own laptop as seen from the Android emulator; override with
+/// `--dart-define=API_BASE_URL=http://<laptop-ip>:8000` for a real phone or a shared/hosted backend.
+const String kBaseUrl = String.fromEnvironment('API_BASE_URL', defaultValue: 'http://10.0.2.2:8000');
 /// Error from the API, using its standard `{code, message}` body (API doc 1.3).
 class ApiException implements Exception {
   ApiException(this.code, this.message);
