@@ -181,11 +181,13 @@ class DeviceToken(Base):
 
 
 class MomentWindow(Base):
-    """One row per day: the random time the IBA Moment opens and the 2-minute close."""
+    """One row per student per day: the random time their IBA Moment opens and the 2-minute close."""
 
     __tablename__ = "moment_windows"
+    __table_args__ = (UniqueConstraint("student_id", "day", name="uq_moment_window_student_day"),)
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    day: Mapped[date] = mapped_column(Date, unique=True)
+    student_id: Mapped[int] = mapped_column(ForeignKey("students.id", ondelete="CASCADE"))
+    day: Mapped[date] = mapped_column(Date)
     opens_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     closes_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))

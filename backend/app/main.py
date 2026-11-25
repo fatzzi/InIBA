@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.db import get_db
 from app.errors import install_error_handlers
-from app.routers import auth, feed, posts, profile
+from app.routers import auth, feed, moments, posts, profile
 from app.storage import MEDIA_ROOT, MEDIA_URL
 
 app = FastAPI(title="InIBA API", version="0.1.0")
@@ -22,6 +22,7 @@ app.include_router(auth.router)
 app.include_router(profile.router)
 app.include_router(posts.router)
 app.include_router(feed.router)
+app.include_router(moments.router)
 
 # Local image storage (see app/storage.py). A cloud store will serve its own URLs instead.
 MEDIA_ROOT.mkdir(parents=True, exist_ok=True)

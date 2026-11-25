@@ -1,5 +1,7 @@
+from datetime import time
 from functools import lru_cache
 
+from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -20,6 +22,20 @@ class Settings(BaseSettings):
     smtp_from_email: str = "no-reply@iniba.local"
     smtp_use_tls: bool = True
     otp_resend_cooldown_seconds: int = 60
+    # SCRUM-42: the daily IBA Moment opens at a random time between these campus-time (Karachi) hours
+    moment_earliest: time = time(9, 0)
+    moment_latest: time = time(21, 0)
+    moment_duration_seconds: int = 120
+
+    @model_validator(mode="after")
+    def _moment_hours_fit(self) -> "Settings":
+        def seconds(t: time) -> int:
+            return t.hour * 3600 + t.minute * 60 + t.second
+
+        room = seconds(self.moment_latest) - seconds(self.moment_earliest)
+        if self.moment_duration_seconds <= 0 or room < self.moment_duration_seconds:
+            raise ValueError("MOMENT_EARLIEST to MOMENT_LATEST must fit MOMENT_DURATION_SECONDS")
+        return self
 
 
 @lru_cache
