@@ -9,7 +9,8 @@ from sqlalchemy import select
 
 from app.security import get_current_user
 from app.main import app
-from app.models import Comment, Highlight, HighlightPost, LocationTag, Post, Reaction, Report, Student
+from app.models import Comment, Highlight, HighlightPost, LocationTag, MomentWindow, Post, Reaction, Report, Student
+from app.services.profile import CAMPUS_TZ
 from app.storage import LocalImageStore, get_image_store
 
 
@@ -82,6 +83,12 @@ def test_text_post(login, people, media):
 
 def test_dual_image_post_with_zone_and_moment(login, people, media, db_session):
     a, _, library = people
+    now = datetime.now(timezone.utc)
+    db_session.add(MomentWindow(
+        student_id=a.id, day=now.astimezone(CAMPUS_TZ).date(),
+        opens_at=now - timedelta(seconds=60), closes_at=now + timedelta(seconds=60),
+    ))
+    db_session.commit()
     res = login(a).post(
         "/posts",
         data={"content": "Library grind", "locationTagId": str(library.id), "isMoment": "true"},

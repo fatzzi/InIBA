@@ -12,6 +12,7 @@ erDiagram
     STUDENTS ||--o{ OTP_CODES : receives
     STUDENTS ||--o{ DEVICE_TOKENS : registers
     STUDENTS ||--o| SPOTTED_AT : has
+    STUDENTS ||--o{ MOMENT_WINDOWS : gets
     STUDENTS }o--o{ SOCIETIES : "joins (student_societies)"
     LOCATION_TAGS ||--o{ POSTS : tags
     LOCATION_TAGS ||--o{ SPOTTED_AT : "current zone"
@@ -105,7 +106,8 @@ erDiagram
     }
     MOMENT_WINDOWS {
         int id PK
-        date day UK
+        int student_id FK
+        date day
         datetime opens_at
         datetime closes_at
     }
@@ -115,5 +117,5 @@ erDiagram
 
 - One reaction per student per post: unique `(post_id, student_id)`.
 - One report per reporter per post, and per reporter per reported student (API returns 409 on a duplicate).
-- `MOMENT_WINDOWS` holds the random daily IBA Moment time and its 2-minute close (API `GET /moments/current`).
+- `MOMENT_WINDOWS` holds each student's own random daily IBA Moment time and its 2-minute close (API `GET /moments/current`): unique `(student_id, day)`.
 - OTP codes are stored hashed and expire; `attempts` supports the 429 rate limit.
