@@ -70,17 +70,19 @@ class AuthController extends Notifier<AuthState> {
     }
   }
 
-  /// Returns the HTTP status on failure (e.g. 429) or null on success.
+  /// SCRUM-25. Returns the HTTP status on failure (e.g. 429) or null on success.
+  /// On success the router sends the student to Profile Setup (first time) or
+  /// the Main Feed (profile already filled in).
   Future<int?> verifyOtp(String email, String code) async {
+    if (state.isLoading) return null;
     state = state.copyWith(isLoading: true, clearError: true);
     try {
-      final token = await _repo.verifyOtp(email, code);
-      await _tokens.save(token);
-      // First login after verifying -> profile setup (1.7)
+      final result = await _repo.verifyOtp(email, code);
+      await _tokens.save(result.token);
       state = state.copyWith(
         isLoading: false,
         status: AuthStatus.authenticated,
-        needsProfileSetup: true,
+        needsProfileSetup: result.needsProfileSetup,
       );
       return null;
     } on AuthException catch (e) {
@@ -89,12 +91,16 @@ class AuthController extends Notifier<AuthState> {
     }
   }
 
-  Future<void> resendOtp(String email) async {
+  /// SCRUM-25. Returns null when a new code was sent, otherwise the error
+  /// (its retryAfterSeconds tells the screen how long to count down).
+  Future<AuthException?> resendOtp(String email) async {
     state = state.copyWith(clearError: true);
     try {
       await _repo.resendOtp(email);
+      return null;
     } on AuthException catch (e) {
       state = state.copyWith(error: e.message);
+      return e;
     }
   }
 
