@@ -114,6 +114,22 @@ class AuthRepository {
     }
   }
 
+  /// POST /auth/logout (1.8, SCRUM-70). Revokes the JWT on the server so a copied token
+  /// stops working. Best effort: if the phone is offline we still log out locally.
+  Future<void> logout() async {
+    try {
+      await _dio.post(
+        '/auth/logout',
+        options: Options(
+          sendTimeout: const Duration(seconds: 5),
+          receiveTimeout: const Duration(seconds: 5),
+        ),
+      );
+    } on DioException {
+      // 401 means the token was already invalid; network errors are ignored on purpose.
+    }
+  }
+
   /// PUT /profile (1.7). Multipart so the photo can be sent. Adjust to backend.
   Future<void> saveProfile({
     required String fullName,

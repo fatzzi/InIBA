@@ -43,6 +43,8 @@ class Student(Base):
     is_verified: Mapped[bool] = mapped_column(Boolean, default=False)
     is_suspended: Mapped[bool] = mapped_column(Boolean, default=False)
     streak_count: Mapped[int] = mapped_column(Integer, default=0)  # unused: streak is computed from posts
+    # SCRUM-70: bumped on logout so every JWT issued before it stops working.
+    token_version: Mapped[int] = mapped_column(Integer, default=0, server_default=text("0"))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
 
     societies: Mapped[list["Society"]] = relationship(secondary="student_societies", back_populates="members")

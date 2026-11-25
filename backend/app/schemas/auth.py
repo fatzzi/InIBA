@@ -71,3 +71,6 @@ class ResendOtpRequest(CamelModel):
 class ResendOtpResponse(CamelModel):
     message: str
     expires_in_minutes: int
+
+class LogoutResponse(CamelModel):
+    message: str
