@@ -4,17 +4,24 @@ from fastapi.staticfiles import StaticFiles
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
+from app.config import get_settings
 from app.db import get_db
 from app.errors import install_error_handlers
 from app.routers import auth, feed, posts, profile
 from app.storage import MEDIA_ROOT, MEDIA_URL
 
+_settings = get_settings()
+if problems := _settings.production_problems():
+    raise RuntimeError("Refusing to start in production:\n- " + "\n- ".join(problems))
+
 app = FastAPI(title="InIBA API", version="0.1.0")
 install_error_handlers(app)
-# Lets the Flutter app run in Chrome (flutter run -d chrome) call the API on localhost.
+# Lets the Flutter app run in Chrome (flutter run -d chrome) call the API on localhost, plus any origins in
+# CORS_ORIGINS (e.g. a hosted web build). The Android/iOS apps are not browsers and need no CORS entry.
 app.add_middleware(
     CORSMiddleware,
     allow_origin_regex=r"http://(localhost|127\.0\.0\.1)(:\d+)?",
+    allow_origins=[o.strip() for o in _settings.cors_origins.split(",") if o.strip()],
     allow_methods=["*"],
     allow_headers=["*"],
 )

@@ -1,0 +1,39 @@
+# Render blueprint for the public InIBA API (SCRUM-76).
+# Render > New > Blueprint > pick this repo. Fill in the "sync: false" values in the dashboard; never commit them.
+services:
+  - type: web
+    name: iniba-api
+    runtime: docker
+    plan: free
+    region: singapore
+    dockerContext: ./backend
+    dockerfilePath: ./backend/Dockerfile
+    healthCheckPath: /health
+    autoDeploy: true # redeploys on every merge to the default branch
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: JWT_SECRET
+        generateValue: true
+      - key: DATABASE_URL # Supabase > Connect > Session pooler, with postgresql+psycopg://
+        sync: false
+      - key: IMAGE_STORE
+        value: supabase
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_KEY
+        sync: false
+      - key: SUPABASE_BUCKET
+        value: media
+      - key: ALLOWED_EMAIL_DOMAIN
+        value: khi.iba.edu.pk
+      - key: SMTP_HOST # e.g. smtp.gmail.com with an app password, or smtp-relay.brevo.com
+        sync: false
+      - key: SMTP_PORT
+        value: "587"
+      - key: SMTP_USERNAME
+        sync: false
+      - key: SMTP_PASSWORD
+        sync: false
+      - key: SMTP_FROM_EMAIL
+        sync: false
