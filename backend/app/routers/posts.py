@@ -1,5 +1,7 @@
 """POST /posts, GET /posts/{postId}, DELETE /posts/{postId} (API doc 4.3-4.5; SCRUM-39)."""
 
+from datetime import datetime
+
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile, status
 from sqlalchemy.orm import Session
 
@@ -9,20 +11,21 @@ from app.media_urls import absolute_url_fn
 from app.models import Student
 from app.schemas.posts import Message, PostOut
 from app.services import posts as svc
+from app.services.moments import utc_now
 from app.storage import ImageStore, get_image_store
 
 router = APIRouter(prefix="/posts", tags=["posts"])
 
 
-async def _read(upload: UploadFile | None) -> bytes | None:
+def _read(upload: UploadFile | None) -> bytes | None:
     if upload is None:
         return None
-    data = await upload.read()
+    data = upload.file.read()
     return data or None  # an empty file field means "no image"
 
 
 @router.post("", response_model=PostOut, response_model_by_alias=True, status_code=status.HTTP_201_CREATED)
-async def create_post(
+def create_post(
     request: Request,
     content: str | None = Form(None, description="Caption, or the text of a text post. Max 300 chars"),
     imageBack: UploadFile = File(None, description="Back camera photo (JPEG/PNG, max 10 MB)"),
@@ -32,8 +35,12 @@ async def create_post(
     me: Student = Depends(get_current_user),
     db: Session = Depends(get_db),
     store: ImageStore = Depends(get_image_store),
+    now: datetime = Depends(utc_now),
 ) -> PostOut:
-    """Publish a text post or a photo post (multipart/form-data). A new post has zero reactions and comments."""
+    """Publish a text post or a photo post (multipart/form-data). A new post has zero reactions and comments.
+
+    A photo with isMoment=true gets 410 outside the IBA Moment window and 409 if today's was already posted.
+    """
     if request.headers.get("content-type", "").startswith("application/json"):
         raise HTTPException(400, "Send posts as multipart/form-data, not JSON")
     post = svc.create_post(
@@ -41,10 +48,11 @@ async def create_post(
         me,
         store,
         content=content,
-        image_back=await _read(imageBack),
-        image_front=await _read(imageFront),
+        image_back=_read(imageBack),
+        image_front=_read(imageFront),
         location_tag_id=locationTagId or None,  # the docs page sends 0 for an untouched field; ids start at 1
         is_moment=isMoment,
+        now=now,
     )
     return svc.to_out(db, post, me, absolute_url_fn(request))
 
