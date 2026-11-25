@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+# Blocks pushing straight to main. GitHub enforces this too (see CONTRIBUTING.md);
+# this just catches it before the round trip. Enable with:
+#   git config core.hooksPath .githooks
+while read -r _local_ref _local_sha remote_ref _remote_sha; do
+  if [[ "$remote_ref" == "refs/heads/main" ]]; then
+    echo "pre-push: don't push to main directly. Open a pull request from a feature/ branch." >&2
+    exit 1
+  fi
+done
+exit 0
