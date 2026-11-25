@@ -1,7 +1,8 @@
-"""Daily IBA Moment (SCRUM-42, API doc 4.2): one random window per campus day, shared by every student.
+"""Daily IBA Moment (SCRUM-42, API doc 4.2): one random window per student per campus day.
 
-The day's row in `moment_windows` is created the first time anyone needs it (status check, Moment post, or the
-push scheduler of SCRUM-43 calling `window_for_today`). Nothing reveals the time before the window opens.
+Each student gets their own time, so students are not all notified at once (test strategy CONT-05). The row in
+`moment_windows` is created the first time it is needed (status check, Moment post, or the push scheduler of SCRUM-43
+calling `window_for_today` for each student). Nothing reveals the time before the window opens.
 """
 
 import math
@@ -46,10 +47,10 @@ def _pick_opening(now: datetime, settings: Settings) -> datetime:
     return start + timedelta(seconds=secrets.randbelow(int((last - start).total_seconds()) + 1))
 
 
-def window_for_today(db: Session, now: datetime) -> MomentWindow:
-    """Today's window, created on first use. Two servers racing end up with the same row (`day` is unique)."""
+def window_for_today(db: Session, student: Student, now: datetime) -> MomentWindow:
+    """The student's window today, created on first use. Racing requests end up with the same row (it is unique)."""
     day = now.astimezone(CAMPUS_TZ).date()
-    query = select(MomentWindow).where(MomentWindow.day == day)
+    query = select(MomentWindow).where(MomentWindow.student_id == student.id, MomentWindow.day == day)
     window = db.scalar(query)
     if window is None:
         settings = get_settings()
@@ -57,7 +58,7 @@ def window_for_today(db: Session, now: datetime) -> MomentWindow:
         closes_at = opens_at + timedelta(seconds=settings.moment_duration_seconds)
         try:
             with db.begin_nested():
-                db.add(MomentWindow(day=day, opens_at=opens_at, closes_at=closes_at))
+                db.add(MomentWindow(student_id=student.id, day=day, opens_at=opens_at, closes_at=closes_at))
             db.commit()
         except IntegrityError:
             pass  # someone else created it first
@@ -78,7 +79,7 @@ def _posted_today(db: Session, student: Student, now: datetime, *, moments_only:
 
 
 def status(db: Session, student: Student, now: datetime) -> MomentStatus:
-    window = window_for_today(db, now)
+    window = window_for_today(db, student, now)
     closes_at = _as_utc(window.closes_at)
     active = _as_utc(window.opens_at) <= now < closes_at
     return MomentStatus(
@@ -95,7 +96,7 @@ def require_moment_allowed(db: Session, student: Student, now: datetime) -> None
     The student row stays locked until the post is committed, so two simultaneous uploads cannot both pass.
     (SQLite ignores the lock.) A refusal releases the lock at once instead of at the end of the request.
     """
-    window = window_for_today(db, now)
+    window = window_for_today(db, student, now)
     opens_at, closes_at = _as_utc(window.opens_at), _as_utc(window.closes_at)
     db.execute(select(Student.id).where(Student.id == student.id).with_for_update())
     if _posted_today(db, student, now, moments_only=True):

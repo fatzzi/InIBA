@@ -85,7 +85,8 @@ def test_dual_image_post_with_zone_and_moment(login, people, media, db_session):
     a, _, library = people
     now = datetime.now(timezone.utc)
     db_session.add(MomentWindow(
-        day=now.astimezone(CAMPUS_TZ).date(), opens_at=now - timedelta(seconds=60), closes_at=now + timedelta(seconds=60),
+        student_id=a.id, day=now.astimezone(CAMPUS_TZ).date(),
+        opens_at=now - timedelta(seconds=60), closes_at=now + timedelta(seconds=60),
     ))
     db_session.commit()
     res = login(a).post(

@@ -1,4 +1,4 @@
-"""SCRUM-42: daily IBA Moment window, GET /moments/current, 409/410 on POST /posts (test plan CONT-03, 17-19)."""
+"""SCRUM-42: daily IBA Moment window, GET /moments/current, 409/410 on POST /posts (test plan CONT-03, 05, 17-19)."""
 
 from datetime import date, datetime, time, timedelta, timezone
 from io import BytesIO
@@ -33,11 +33,19 @@ def student(db_session):
 
 
 @pytest.fixture()
-def window(db_session):
-    w = MomentWindow(day=DAY, opens_at=OPENS, closes_at=CLOSES)
+def window(db_session, student):
+    w = MomentWindow(student_id=student.id, day=DAY, opens_at=OPENS, closes_at=CLOSES)
     db_session.add(w)
     db_session.commit()
     return w
+
+
+@pytest.fixture()
+def other(db_session):
+    s = Student(email="hamza.k@khi.iba.edu.pk", password_hash="x", name="Hamza K.", is_verified=True)
+    db_session.add(s)
+    db_session.commit()
+    return s
 
 
 @pytest.fixture()
@@ -94,9 +102,8 @@ def test_text_post_unlocks_feed_but_is_not_the_moment(at, window):
     assert body["feedLocked"] is False and body["alreadyPosted"] is False
 
 
-def test_moment_post_sets_already_posted_for_that_student_only(at, window, db_session):
-    other = Student(email="hamza.k@khi.iba.edu.pk", password_hash="x", name="Hamza K.", is_verified=True)
-    db_session.add(other)
+def test_moment_post_sets_already_posted_for_that_student_only(at, window, other, db_session):
+    db_session.add(MomentWindow(student_id=other.id, day=DAY, opens_at=OPENS, closes_at=CLOSES))
     db_session.commit()
     assert post_moment(at(OPENS)).status_code == 201
     body = status(at(OPENS))
@@ -104,6 +111,16 @@ def test_moment_post_sets_already_posted_for_that_student_only(at, window, db_se
     body = status(at(OPENS, other))
     assert body["alreadyPosted"] is False and body["feedLocked"] is True
     assert post_moment(at(OPENS, other)).status_code == 201
+
+
+def test_each_student_has_their_own_window(at, window, other, db_session):
+    later = OPENS + timedelta(hours=2)
+    db_session.add(MomentWindow(student_id=other.id, day=DAY, opens_at=later, closes_at=later + timedelta(seconds=120)))
+    db_session.commit()
+    assert status(at(OPENS))["active"] is True and status(at(OPENS, other))["active"] is False
+    assert post_moment(at(OPENS, other)).status_code == 410  # someone else's window does not count
+    assert status(at(later))["active"] is False and status(at(later, other))["active"] is True
+    assert post_moment(at(later, other)).status_code == 201
 
 
 def test_status_resets_at_campus_midnight(at, window):
@@ -176,29 +193,43 @@ def test_bad_image_is_400_before_any_moment_check(at, window):
 # ---------- picking the time ----------
 
 
-def test_one_window_per_day_and_it_does_not_move(at, db_session):
+def test_one_window_per_day_and_it_does_not_move(at, student, db_session):
     now = datetime(2026, 11, 26, 2, 0, tzinfo=timezone.utc)
-    first = moments.window_for_today(db_session, now)
+    first = moments.window_for_today(db_session, student, now)
     opens = first.opens_at
     status(at(now + timedelta(hours=1)))
-    again = moments.window_for_today(db_session, now + timedelta(hours=10))
+    again = moments.window_for_today(db_session, student, now + timedelta(hours=10))
     assert again.id == first.id and again.opens_at == opens
     assert db_session.scalar(select(func.count()).select_from(MomentWindow)) == 1
-    tomorrow = moments.window_for_today(db_session, now + timedelta(days=1))
+    tomorrow = moments.window_for_today(db_session, student, now + timedelta(days=1))
     assert tomorrow.id != first.id and tomorrow.day == DAY + timedelta(days=1)
 
 
-def test_random_times_stay_in_the_allowed_hours_and_vary(db_session):
+def test_random_times_stay_in_the_allowed_hours_and_vary(student, db_session):
     picked = set()
     for i in range(60):
         now = datetime(2027, 1, 1, 19, 0, tzinfo=timezone.utc) + timedelta(days=i)  # campus midnight
-        w = moments.window_for_today(db_session, now)
+        w = moments.window_for_today(db_session, student, now)
         opens, closes = (moments._as_utc(t).astimezone(CAMPUS_TZ) for t in (w.opens_at, w.closes_at))
         assert opens.date() == closes.date() == w.day
         assert time(9, 0) <= opens.time() and closes.time() <= time(21, 0)
         assert closes - opens == timedelta(seconds=120)
         picked.add(opens.time())
     assert len(picked) > 30
+
+
+def test_students_are_not_all_notified_at_the_same_time(student, other, db_session):
+    """CONT-05: several simulated days, several users: one window each per day, at different times."""
+    third = Student(email="ayesha.r@khi.iba.edu.pk", password_hash="x", name="Ayesha R.", is_verified=True)
+    db_session.add(third)
+    db_session.commit()
+    days_with_different_times = 0
+    for i in range(10):
+        now = datetime(2027, 1, 1, 19, 0, tzinfo=timezone.utc) + timedelta(days=i)
+        times = {moments.window_for_today(db_session, s, now).opens_at for s in (student, other, third)}
+        days_with_different_times += len(times) > 1
+    assert days_with_different_times >= 9
+    assert db_session.scalar(select(func.count()).select_from(MomentWindow)) == 30
 
 
 def test_server_started_mid_day_picks_a_time_still_ahead():
