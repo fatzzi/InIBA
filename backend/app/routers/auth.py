@@ -18,7 +18,7 @@ from app.schemas.auth import (
     StudentSummary,
     VerifyOtpRequest,
 )
-from app.security import create_access_token, hash_password
+from app.security import create_access_token,get_current_user,hash_password
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
