@@ -161,6 +161,8 @@ class HighlightPost(Base):
 
     highlight_id: Mapped[int] = mapped_column(ForeignKey("highlights.id", ondelete="CASCADE"), primary_key=True)
     post_id: Mapped[int] = mapped_column(ForeignKey("posts.id", ondelete="CASCADE"), primary_key=True)
+    # SCRUM-37: order of posts inside the highlight; position 0 is the cover.
+    position: Mapped[int] = mapped_column(Integer, default=0, server_default=text("0"))
 
 
 class SpottedAt(Base):
