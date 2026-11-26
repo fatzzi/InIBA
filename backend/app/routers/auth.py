@@ -7,9 +7,11 @@ from sqlalchemy.orm import Session
 from app.config import get_settings
 from app.db import get_db
 from app.models import Student
+ feature/SCRUM-21-verify-otp
 from app.otp import enforce_resend_cooldown, issue_otp, send_otp_email, verify_otp_code
 from app.schemas.auth import (
     AuthResponse,
+    LogoutResponse,
     RegisterRequest,
     RegisterResponse,
     ResendOtpRequest,
@@ -97,3 +99,15 @@ def verify_otp(body: VerifyOtpRequest, db: Session = Depends(get_db)) -> AuthRes
             profile_photo=student.profile_photo,
         ),
     )
+
+@router.post("/logout", response_model=LogoutResponse)
+def logout(current_user: Student = Depends(get_current_user), db: Session = Depends(get_db)) -> LogoutResponse:
+    """SCRUM-70. End the session so nobody else can use this account on the device.
+
+    Bumps the student's token_version, so the JWT the app was holding (and any copy of it)
+    gets 401 from now on. The app also deletes its stored JWT. Because the version is per
+    student, this signs the student out on every device, not just this one.
+    """
+    current_user.token_version = (current_user.token_version or 0) + 1
+    db.commit()
+    return LogoutResponse(message="Logged out")

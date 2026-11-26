@@ -1,64 +1,85 @@
 import 'package:flutter/material.dart';
-
-import 'home_shell.dart';
-
-/// Landing screen. In the real app, Log In / Sign Up will hit the
-/// FastAPI /auth endpoints; for now they just drop into the app shell
-/// so the rest of the UI can be reviewed.
+import 'package:go_router/go_router.dart';
+/// Wireframe 1.1 - Welcome (no valid JWT).
+/// Layout: image placeholder, "InIBA" title, tagline, then
+/// Sign Up (filled), Log In (outlined) and the email hint at the bottom.
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 32),
+          padding: const EdgeInsets.all(24),
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Icon(Icons.camera_alt_outlined, size: 72),
-              const SizedBox(height: 16),
-              Text(
-                'InIBA',
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
+              // Top area: image + title + tagline
+              Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // Image placeholder. Swap for Image.asset(...) when the
+                    // team has the real artwork.
+                    Container(
+                      height: 220,
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.surfaceContainerHighest,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(
+                        Icons.image_outlined,
+                        size: 56,
+                        color: theme.colorScheme.outline,
+                      ),
                     ),
+                    const SizedBox(height: 24),
+                    Text(
+                      'InIBA',
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.headlineMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Your campus, unfiltered. IBA students only.',
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.bodyMedium,
+                    ),
+                  ],
+                ),
               ),
-              const SizedBox(height: 8),
-              Text(
-                'One place for low-pressure moments\nand campus updates, for IBA students only.',
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-              const SizedBox(height: 40),
+
+              // Bottom area: buttons + hint
               FilledButton(
-                onPressed: () => _enterApp(context),
+                onPressed: () => context.push('/signup'),
+                child: const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 12),
+                  child: Text('Sign Up with IBA email'),
+                ),
+              ),
+              const SizedBox(height: 12),
+              OutlinedButton(
+                onPressed: () => context.push('/login'),
                 child: const Padding(
                   padding: EdgeInsets.symmetric(vertical: 12),
                   child: Text('Log In'),
                 ),
               ),
               const SizedBox(height: 12),
-              OutlinedButton(
-                onPressed: () => _enterApp(context),
-                child: const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 12),
-                  child: Text('Sign Up with IBA email'),
-                ),
+              Text(
+                'Use your @khi.iba.edu.pk email',
+                textAlign: TextAlign.center,
+                style: theme.textTheme.bodySmall,
               ),
             ],
           ),
         ),
       ),
-    );
-  }
-
-  void _enterApp(BuildContext context) {
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => const HomeShell()),
     );
   }
 }

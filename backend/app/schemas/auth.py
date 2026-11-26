@@ -93,3 +93,6 @@ class AuthResponse(CamelModel):
     token: str
     expires_in: int
     student: StudentSummary
+
+class LogoutResponse(CamelModel):
+    message: str

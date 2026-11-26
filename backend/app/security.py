@@ -30,13 +30,20 @@ def verify_password(password: str, password_hash: str) -> bool:
         return False
 
 
-def create_access_token(student_id: int, role: str = "student", expires_hours: int | None = None) -> str:
+def create_access_token(
+    student_id: int,
+    role: str = "student",
+    expires_hours: int | None = None,
+    token_version: int = 0,
+) -> str:
+    """Pass `token_version=student.token_version` so logging out (SCRUM-70) can revoke the token."""
     settings = get_settings()
     expire_delta = timedelta(hours=expires_hours if expires_hours is not None else settings.jwt_expire_hours)
     now = datetime.now(timezone.utc)
     payload = {
         "sub": str(student_id),
         "role": role,
+        "ver": token_version,
         "iat": now,
         "exp": now + expire_delta,
     }
@@ -73,6 +80,9 @@ def get_current_user(
     student = db.get(Student, student_id)
     if student is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
+    # SCRUM-70: a token issued before the student's last logout is no longer valid.
+    if payload.get("ver", 0) != (student.token_version or 0):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Session has ended. Please log in again")
     if student.is_suspended:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Account is suspended")
 

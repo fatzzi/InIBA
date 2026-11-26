@@ -6,11 +6,13 @@ from sqlalchemy import (
     Boolean,
     Date,
     DateTime,
+    JSON,
     ForeignKey,
     Integer,
     String,
     Text,
     UniqueConstraint,
+    text,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -35,10 +37,14 @@ class Student(Base):
     bio: Mapped[str | None] = mapped_column(String(280))
     profile_photo: Mapped[str | None] = mapped_column(String(500))
     mood_sticker: Mapped[str | None] = mapped_column(String(40))
+    mood_set_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    tags: Mapped[list[str]] = mapped_column(JSON, default=list, server_default=text("'[]'"))  # student-written, max 5 (API doc 3.3)
     role: Mapped[str] = mapped_column(String(10), default="student")  # student | admin
     is_verified: Mapped[bool] = mapped_column(Boolean, default=False)
     is_suspended: Mapped[bool] = mapped_column(Boolean, default=False)
-    streak_count: Mapped[int] = mapped_column(Integer, default=0)
+    streak_count: Mapped[int] = mapped_column(Integer, default=0)  # unused: streak is computed from posts
+    # SCRUM-70: bumped on logout so every JWT issued before it stops working.
+    token_version: Mapped[int] = mapped_column(Integer, default=0, server_default=text("0"))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
 
     societies: Mapped[list["Society"]] = relationship(secondary="student_societies", back_populates="members")
@@ -177,11 +183,13 @@ class DeviceToken(Base):
 
 
 class MomentWindow(Base):
-    """One row per day: the random time the IBA Moment opens and the 2-minute close."""
+    """One row per student per day: the random time their IBA Moment opens and the 2-minute close."""
 
     __tablename__ = "moment_windows"
+    __table_args__ = (UniqueConstraint("student_id", "day", name="uq_moment_window_student_day"),)
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    day: Mapped[date] = mapped_column(Date, unique=True)
+    student_id: Mapped[int] = mapped_column(ForeignKey("students.id", ondelete="CASCADE"))
+    day: Mapped[date] = mapped_column(Date)
     opens_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     closes_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))

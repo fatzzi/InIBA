@@ -30,7 +30,7 @@ Dates come from the course project guidelines. Work is tracked in Jira (project 
 - [x] Git repository, branching rules, PR template and CI
 - [x] Backend skeleton, database schema and migration, seed script
 - [x] ERD and environment guide
-- [x] Wireframes drafted in Figma (39 screens)
+- [x] Wireframes drafted in Figma (40 screens)
 - [ ] Wireframes exported to PDF for submission
 - [ ] Sprint 1 created in Jira with dates and stories (not started)
 - [ ] Jira board shared with the instructor and TA
