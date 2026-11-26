@@ -7,7 +7,6 @@ from sqlalchemy.orm import Session
 from app.config import get_settings
 from app.db import get_db
 from app.models import Student
- feature/SCRUM-21-verify-otp
 from app.otp import enforce_resend_cooldown, issue_otp, send_otp_email, verify_otp_code
 from app.schemas.auth import (
     AuthResponse,
