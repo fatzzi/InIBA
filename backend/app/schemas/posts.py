@@ -39,6 +39,10 @@ class PostOut(_Camel):
     your_reaction: str | None
 
 
+class Zones(_Camel):
+    items: list[LocationTagOut]
+
+
 class FeedPage(_Camel):
     is_more: bool
     items: list[PostOut]
