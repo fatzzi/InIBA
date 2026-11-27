@@ -7,15 +7,18 @@ from sqlalchemy.orm import Session
 from app.config import get_settings
 from app.db import get_db
 from app.models import Student
-from app.otp import enforce_resend_cooldown, issue_otp, send_otp_email
+from app.otp import enforce_resend_cooldown, issue_otp, send_otp_email, verify_otp_code
 from app.schemas.auth import (
+    AuthResponse,
     LogoutResponse,
     RegisterRequest,
     RegisterResponse,
     ResendOtpRequest,
     ResendOtpResponse,
+    StudentSummary,
+    VerifyOtpRequest,
 )
-from app.security import get_current_user, hash_password
+from app.security import create_access_token,get_current_user,hash_password
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -69,6 +72,31 @@ def resend_otp(body: ResendOtpRequest, db: Session = Depends(get_db)) -> ResendO
     return ResendOtpResponse(
         message=f"OTP sent to {student.email}",
         expires_in_minutes=get_settings().otp_expire_minutes,
+    )
+@router.post("/verify", response_model=AuthResponse)
+def verify_otp(body: VerifyOtpRequest, db: Session = Depends(get_db)) -> AuthResponse:
+    """SCRUM-21. Verify 6-digit OTP, activate account, and issue a 24h JWT."""
+    student = db.scalar(select(Student).where(Student.email == body.email))
+    if student is None or student.is_verified:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "No pending account for this email")
+
+    verify_otp_code(db, student, body.code)
+    student.is_verified = True
+    db.commit()
+    db.refresh(student)
+
+    settings = get_settings()
+    token = create_access_token(student.id, role=student.role)
+    return AuthResponse(
+        token=token,
+        expires_in=settings.jwt_expire_hours * 3600,
+        student=StudentSummary(
+            student_id=student.id,
+            name=student.name,
+            batch=student.batch,
+            department=student.department,
+            profile_photo=student.profile_photo,
+        ),
     )
 
 @router.post("/logout", response_model=LogoutResponse)

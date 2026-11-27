@@ -71,6 +71,28 @@ class ResendOtpRequest(CamelModel):
 class ResendOtpResponse(CamelModel):
     message: str
     expires_in_minutes: int
+class VerifyOtpRequest(CamelModel):
+    email: EmailStr
+    code: str = Field(min_length=6, max_length=6, pattern=r"^\d{6}$")
+
+    @field_validator("email")
+    @classmethod
+    def iba_domain_only(cls, value: str) -> str:
+        return _normalise_iba_email(value)
+
+
+class StudentSummary(CamelModel):
+    student_id: int
+    name: str | None
+    batch: str | None
+    department: str | None
+    profile_photo: str | None
+
+
+class AuthResponse(CamelModel):
+    token: str
+    expires_in: int
+    student: StudentSummary
 
 class LogoutResponse(CamelModel):
     message: str

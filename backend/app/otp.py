@@ -16,8 +16,7 @@ from sqlalchemy.orm import Session
 
 from app.config import get_settings
 from app.models import OtpCode, Student
-from app.security import hash_password
-
+from app.security import hash_password, verify_password
 
 def generate_code() -> str:
     """6-digit code from a cryptographically secure source (not random.randint)."""
@@ -68,6 +67,35 @@ def enforce_resend_cooldown(db: Session, student: Student) -> None:
         raise HTTPException(429, f"Please wait {wait} seconds before requesting another code")
 
 
+
+def verify_otp_code(db: Session, student: Student, code: str) -> None:
+    """SCRUM-21. Validate the 6-digit code, track failed attempts, and delete on success."""
+    settings = get_settings()
+    otp = db.scalar(
+        select(OtpCode)
+        .where(OtpCode.student_id == student.id)
+        .order_by(OtpCode.created_at.desc())
+        .limit(1)
+    )
+    if otp is None:
+        raise HTTPException(400, "No active verification code; request a new one")
+
+    if otp.attempts >= settings.otp_max_attempts:
+        raise HTTPException(429, "Too many failed attempts; please request a new code")
+
+    if as_utc(otp.expires_at) <= datetime.now(timezone.utc):
+        db.delete(otp)
+        db.commit()
+        raise HTTPException(400, "Verification code has expired")
+
+    if not verify_password(code, otp.code_hash):
+        otp.attempts += 1
+        db.commit()
+        if otp.attempts >= settings.otp_max_attempts:
+            raise HTTPException(429, "Too many failed attempts; please request a new code")
+        raise HTTPException(400, "Invalid verification code")
+
+    db.delete(otp)
 def send_otp_email(email: str, code: str) -> None:
     settings = get_settings()
     if not settings.smtp_host:
@@ -93,3 +121,5 @@ def send_otp_email(email: str, code: str) -> None:
     except (smtplib.SMTPException, OSError):
         # Never put the raw error or the password in the response; the API doc wants {code, message}.
         raise HTTPException(503, "Could not send verification email")
+
+
