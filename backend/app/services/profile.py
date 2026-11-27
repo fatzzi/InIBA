@@ -1,4 +1,4 @@
-"""Profile reads and owner edits (SCRUM-32)."""
+"""Profile reads and owner edits (SCRUM-32), and the daily timeline (SCRUM-36)."""
 
 from collections.abc import Callable, Iterable
 from datetime import date, datetime, timedelta, timezone
@@ -11,10 +11,21 @@ from sqlalchemy.orm import Session
 from app.models import Post, Society, Student
 from app.pagination import DEFAULT_LIMIT, paginate
 from app.storage import ImageStore, get_image_store, validate_profile_photo
-from app.schemas.profile import PostPage, PostThumb, ProfileOut, ProfileUpdate, ProfileWithPosts
+from app.schemas.profile import (
+    PostPage,
+    PostThumb,
+    ProfileOut,
+    ProfileUpdate,
+    ProfileWithPosts,
+    TimelineDay,
+    TimelinePage,
+    TimelinePost,
+)
 
 CAMPUS_TZ = ZoneInfo("Asia/Karachi")
 EXCERPT_LEN = 60
+TIMELINE_DEFAULT_DAYS = 14
+TIMELINE_MAX_DAYS = 31
 
 UrlFn = Callable[[str | None], str | None]
 
@@ -23,10 +34,14 @@ def _identity(url: str | None) -> str | None:
     return url
 
 
-def _local_day(ts: datetime) -> date:
+def _as_utc(ts: datetime) -> datetime:
     if ts.tzinfo is None:  # SQLite drops tzinfo; values are stored in UTC
-        ts = ts.replace(tzinfo=timezone.utc)
-    return ts.astimezone(CAMPUS_TZ).date()
+        return ts.replace(tzinfo=timezone.utc)
+    return ts.astimezone(timezone.utc)
+
+
+def _local_day(ts: datetime) -> date:
+    return _as_utc(ts).astimezone(CAMPUS_TZ).date()
 
 
 def streak_from_days(days: Iterable[date], today: date) -> int:
@@ -93,6 +108,44 @@ def post_grid(
             )
             for p in page["items"]
         ],
+    )
+
+
+def timeline(
+    db: Session,
+    student_id: int,
+    offset: int = 0,
+    limit: int = TIMELINE_DEFAULT_DAYS,
+    url: UrlFn = _identity,
+) -> TimelinePage:
+    """Every non-removed post, grouped by campus-time day, newest day and newest post first (API doc 3.4).
+
+    `offset` and `limit` count days, not posts; limit is capped at 31. Posts are grouped in Python rather than SQL
+    so the campus time zone works the same on SQLite (tests) and Postgres. Only five small columns are loaded,
+    and one student's posts are a small set (about one a day).
+    """
+    offset = max(offset, 0)
+    limit = min(max(limit, 1), TIMELINE_MAX_DAYS)
+    rows = db.execute(
+        select(Post.id, Post.created_at, Post.content, Post.image_front, Post.image_back)
+        .where(Post.author_id == student_id, Post.is_removed.is_(False))
+        .order_by(Post.created_at.desc(), Post.id.desc())
+    ).all()
+
+    days: dict[date, list[TimelinePost]] = {}
+    for post_id, created_at, content, front, back in rows:
+        days.setdefault(_local_day(created_at), []).append(
+            TimelinePost(
+                post_id=post_id,
+                thumbnail=url(back or front),
+                excerpt=(content or "")[:EXCERPT_LEN] or None,
+                timestamp=_as_utc(created_at),
+            )
+        )
+    ordered = list(days.items())  # rows are newest first, so days are too
+    return TimelinePage(
+        is_more=offset + limit < len(ordered),
+        items=[TimelineDay(date=day, posts=posts) for day, posts in ordered[offset : offset + limit]],
     )
 
 
