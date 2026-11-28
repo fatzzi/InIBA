@@ -16,7 +16,15 @@ class MomentCard extends ConsumerWidget {
   /// Injectable for tests; defaults to [MomentCaptureScreen].
   final Widget Function(int secondsRemaining)? captureScreenBuilder;
 
-  Future<void> _start(BuildContext context, WidgetRef ref, MomentStatus status) async {
+  Future<void> _start(BuildContext context, WidgetRef ref) async {
+    // New Post stays alive between tabs, so the status on screen can be old. Ask again first.
+    final MomentStatus status;
+    try {
+      status = await ref.refresh(momentStatusProvider.future);
+    } on Exception {
+      return; // the card now shows the error with Retry
+    }
+    if (!status.canCapture || !context.mounted) return; // the card now shows why
     final seconds = status.secondsLeftAt(DateTime.now());
     final photos = await Navigator.of(context).push<MomentPhotos>(
       MaterialPageRoute(
@@ -64,7 +72,7 @@ class MomentCard extends ConsumerWidget {
           iconColor: scheme.primary,
           title: 'Your IBA Moment is open',
           subtitle: '${left ~/ 60}:${(left % 60).toString().padLeft(2, '0')} left. Front and back camera.',
-          action: FilledButton(onPressed: () => _start(context, ref, s), child: const Text('Start')),
+          action: FilledButton(onPressed: () => _start(context, ref), child: const Text('Start')),
         );
       },
     );

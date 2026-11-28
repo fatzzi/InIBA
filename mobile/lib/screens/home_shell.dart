@@ -31,7 +31,9 @@ class _HomeShellState extends State<HomeShell> {
     void go(int i) => setState(() => _index = i);
 
     return Scaffold(
-      body: _screens[_index],
+      // IndexedStack keeps every tab alive, so a photo taken on New Post (or a scrolled feed)
+      // is still there after visiting another tab. Only the selected tab is shown.
+      body: IndexedStack(index: _index, children: _screens),
       bottomNavigationBar: DecoratedBox(
         decoration: BoxDecoration(
           color: scheme.surface,

@@ -332,7 +332,21 @@ void main() {
       await tester.tap(find.text('capture 95'));
       await tester.pumpAndSettle();
       expect(got?.front.name, 'f.png');
-      expect(repo.calls, 2); // refreshed after coming back
+      expect(repo.calls, 3); // on open, again when Start is tapped, and after coming back
+    });
+
+    testWidgets('Start checks again and stays put if the window closed meanwhile', (tester) async {
+      final repo = FakeMomentRepository(
+        status: MomentStatus(active: true, secondsRemaining: 95, alreadyPosted: false, feedLocked: true),
+      );
+      await pumpCard(tester, repo);
+
+      repo.status = MomentStatus(active: false, secondsRemaining: 0, alreadyPosted: false, feedLocked: true);
+      await tester.tap(find.text('Start'));
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('capture'), findsNothing);
+      expect(find.text('Your IBA Moment is not open right now'), findsOneWidget);
     });
 
     testWidgets('closed window: no Start button', (tester) async {
