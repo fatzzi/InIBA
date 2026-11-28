@@ -2,13 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../camera/camera_permission.dart';
+import '../camera/camera_permission_message.dart';
+import '../features/moment/moment_capture_screen.dart';
+import '../features/moment/moment_card.dart';
 import 'photo_preview_screen.dart';
 
-/// Create Post (Content Creation). Sprint 1 scope:
+/// Create Post (Content Creation).
 /// - SCRUM-73: ask for camera permission, explain what to do if it's denied
 /// - SCRUM-74: open the camera, take one photo, preview it (Retake / Use photo)
-/// Uploading the post (POST /posts) and the dual-camera IBA Moment (SCRUM-44)
-/// come in later sprints.
+/// - SCRUM-44: IBA Moment card at the top, leading to the front + back capture with a countdown
+/// Uploading the post (POST /posts) comes with the composer (SCRUM-45).
 class CreatePostScreen extends StatefulWidget {
   const CreatePostScreen({super.key, this.picker});
 
@@ -25,6 +28,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
   /// Last permission problem, shown as a message card. Null = no problem.
   CameraAccess? _problem;
   XFile? _photo;
+  MomentPhotos? _moment;
   bool _busy = false;
 
   Future<void> _takePhoto() async {
@@ -74,8 +78,26 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
       body: ListView(
         padding: const EdgeInsets.all(24),
         children: [
+          MomentCard(onCaptured: (photos) => setState(() => _moment = photos)),
+          const SizedBox(height: 16),
+          if (_moment != null) ...[
+            Row(
+              children: [
+                Expanded(child: _Thumb(label: 'Front', photo: _moment!.front)),
+                const SizedBox(width: 12),
+                Expanded(child: _Thumb(label: 'Back', photo: _moment!.back)),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'IBA Moment ready. Posting it arrives with the post composer.',
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            const SizedBox(height: 24),
+          ],
           if (_problem != null) ...[
-            _PermissionMessage(
+            CameraPermissionMessage(
               access: _problem!,
               onTryAgain: _takePhoto,
               onOpenSettings: openCameraSettings,
@@ -127,73 +149,23 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
   }
 }
 
-/// SCRUM-73: the "helpful message" when the camera isn't allowed.
-class _PermissionMessage extends StatelessWidget {
-  const _PermissionMessage({
-    required this.access,
-    required this.onTryAgain,
-    required this.onOpenSettings,
-  });
+class _Thumb extends StatelessWidget {
+  const _Thumb({required this.label, required this.photo});
 
-  final CameraAccess access;
-  final VoidCallback onTryAgain;
-  final VoidCallback onOpenSettings;
+  final String label;
+  final XFile photo;
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-    final (title, body) = switch (access) {
-      CameraAccess.blocked => (
-          'Camera is turned off for InIBA',
-          'You chose not to be asked again. Open Settings, tap Permissions and allow Camera.',
+    return Column(
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: AspectRatio(aspectRatio: 3 / 4, child: PhotoView(photo: photo, fit: BoxFit.cover)),
         ),
-      CameraAccess.unsupported => (
-          'Camera not available here',
-          'Taking photos works on the Android or iPhone app. Run it on a phone or emulator.',
-        ),
-      _ => (
-          'InIBA needs your camera',
-          'The camera is used to take your IBA Moment and photo posts. '
-              'Nothing is captured until you press the shutter.',
-        ),
-    };
-
-    return Card(
-      color: colors.errorContainer,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(Icons.no_photography_outlined, color: colors.onErrorContainer),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    title,
-                    style: Theme.of(context)
-                        .textTheme
-                        .titleMedium
-                        ?.copyWith(color: colors.onErrorContainer),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(body, style: TextStyle(color: colors.onErrorContainer)),
-            if (access != CameraAccess.unsupported) ...[
-              const SizedBox(height: 12),
-              Align(
-                alignment: Alignment.centerRight,
-                child: access == CameraAccess.blocked
-                    ? FilledButton(onPressed: onOpenSettings, child: const Text('Open Settings'))
-                    : FilledButton(onPressed: onTryAgain, child: const Text('Try again')),
-              ),
-            ],
-          ],
-        ),
-      ),
+        const SizedBox(height: 4),
+        Text(label, style: Theme.of(context).textTheme.bodySmall),
+      ],
     );
   }
 }
