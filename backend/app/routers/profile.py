@@ -1,4 +1,4 @@
-"""GET/PATCH /profile/{id} (API doc 3.2, 3.3; SCRUM-32)."""
+"""GET/PATCH /profile/{id} (API doc 3.2, 3.3; SCRUM-32) and GET /profile/{id}/timeline (3.4; SCRUM-36)."""
 
 import json
 
@@ -13,7 +13,7 @@ from app.media_urls import absolute_url_fn
 from app.security import get_current_user
 from app.models import Student
 from app.pagination import DEFAULT_LIMIT
-from app.schemas.profile import ProfileOut, ProfileUpdate, ProfileWithPosts
+from app.schemas.profile import ProfileOut, ProfileUpdate, ProfileWithPosts, TimelinePage
 from app.services import profile as svc
 from app.storage import ImageStore, get_image_store
 
@@ -81,6 +81,20 @@ def get_profile(
     """Any logged-in student can view any profile. Email is never included. `limit` is capped at 50."""
     student = svc.get_student_or_404(db, student_id)
     return svc.build_profile_with_posts(db, student, offset, limit, _url_fn(request))
+
+
+@router.get("/{student_id}/timeline", response_model=TimelinePage, response_model_by_alias=True)
+def get_timeline(
+    student_id: int,
+    request: Request,
+    offset: int = Query(0, ge=0, description="Days to skip"),
+    limit: int = Query(svc.TIMELINE_DEFAULT_DAYS, ge=1, description="Days per page, default 14, capped at 31"),
+    _: Student = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> TimelinePage:
+    """A student's posts grouped by day (campus time), newest day first. Removed posts are left out."""
+    student = svc.get_student_or_404(db, student_id)
+    return svc.timeline(db, student.id, offset, limit, _url_fn(request))
 
 
 @router.patch(

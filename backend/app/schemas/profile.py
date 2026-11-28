@@ -1,5 +1,6 @@
 """Profile request/response models (API doc 3.2, 3.3). JSON keys are camelCase; email is never part of them."""
 
+from datetime import date, datetime
 from typing import Annotated
 
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints, field_validator
@@ -26,6 +27,22 @@ class PostThumb(_Camel):
 class PostPage(_Camel):
     is_more: bool
     items: list[PostThumb]
+
+
+class TimelinePost(PostThumb):
+    timestamp: datetime
+
+
+class TimelineDay(_Camel):
+    date: date
+    posts: list[TimelinePost]
+
+
+class TimelinePage(_Camel):
+    """GET /profile/{id}/timeline (API doc 3.4): one item per day; offset and limit count days."""
+
+    is_more: bool
+    items: list[TimelineDay]
 
 
 class ProfileOut(_Camel):
